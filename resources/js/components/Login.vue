@@ -1,0 +1,97 @@
+<template>
+    <div style="font-family: sans-serif; max-width: 400px; margin: 100px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin: 0; color: #1f2937; font-size: 28px;">🔑 Sistema de Turnos</h1>
+            <p style="color: #6b7280; margin-top: 5px;">Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <div v-if="errorMessage" style="background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; border: 1px solid #fca5a5;">
+            {{ errorMessage }}
+        </div>
+
+        <form @submit.prevent="handleLogin">
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: bold; font-size: 14px;">Correo Electrónico</label>
+                <input type="email" 
+                       v-model="email" 
+                       required
+                       placeholder="cajero@test.com"
+                       style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 30px; text-align: left;">
+                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: bold; font-size: 14px;">Contraseña</label>
+                <input type="password" 
+                       v-model="password" 
+                       required
+                       placeholder="••••••••"
+                       style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px;">
+            </div>
+
+            <button type="submit" 
+                    :disabled="loading"
+                    style="width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
+                {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión 🚀' }}
+            </button>
+        </form>
+    </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+
+const router = useRouter();
+
+const email = ref('');
+const password = ref('');
+const errorMessage = ref('');
+const loading = ref(false);
+
+const handleLogin = async () => {
+    loading.value = true;
+    errorMessage.value = '';
+
+    try {
+        // 1. Inicializamos el escudo de protección CSRF de Laravel
+        await axios.get('/sanctum/csrf-cookie');
+
+        // 2. Disparamos las credenciales a nuestra API
+        const response = await axios.post('/api/login', {
+            email: email.value,
+            password: password.value
+        });
+
+        if (response.data.status === 'ok') {
+            const user = response.data.user;
+
+            const claveRol = user.rol.clave;
+            
+            // Guardamos temporalmente el rol en localStorage para el Router
+            localStorage.setItem('user_rol', claveRol);
+
+            // 3. Redirección inteligente basada en el rol real
+            switch (claveRol) {
+                case 'superadmin':
+                    await router.push('/superadmin');
+                    break;
+                case 'admin':
+                    await router.push('/admin');
+                    break;
+                case 'cajero':
+                    await router.push('/cajero');
+                    break;
+                default:
+                    await router.push('/login');
+            }
+        }
+    } catch (error) {
+        console.error("Error en el login:", error.response?.data || error);
+        errorMessage.value = error.response?.data?.message || 'Error de conexión con el servidor.';
+    } finally {
+        loading.value = false;
+    }
+};
+</script>
