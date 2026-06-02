@@ -1,5 +1,5 @@
 <template>
-    <div style="font-family: sans-serif; max-width: 1000px; margin: 40px auto; padding: 20px;">
+    <!-- <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto;">
         
         <div v-if="stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px;">
             <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
@@ -29,13 +29,51 @@
             </div>
         </div>
 
+    </div> -->
+    <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto;">
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+            <button 
+                @click="pestanaActual = 'dashboard'" 
+                :style="{ background: pestanaActual === 'dashboard' ? '#1e293b' : '#f8fafc', color: pestanaActual === 'dashboard' ? 'white' : '#64748b' }"
+                style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                📊 Dashboard en Vivo
+            </button>
+            <button 
+                @click="pestanaActual = 'personal'" 
+                :style="{ background: pestanaActual === 'personal' ? '#1e293b' : '#f8fafc', color: pestanaActual === 'personal' ? 'white' : '#64748b' }"
+                style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                👥 Gestión de Cajeros
+            </button>
+            <button 
+                @click="pestanaActual = 'ventanas'" 
+                :style="{ background: pestanaActual === 'ventanas' ? '#1e293b' : '#f8fafc', color: pestanaActual === 'ventanas' ? 'white' : '#64748b' }"
+                style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                👥 Gestión de Ventanillas
+            </button>
+        </div>
+
+        <div v-if="pestanaActual === 'dashboard'">
+            
+        </div>
+
+        <div v-if="pestanaActual === 'personal'">
+            <GestionCajeros />
+        </div>
+        <div v-if="pestanaActual === 'ventanas'">
+            <GestionVentanillas />
+        </div>
+
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
+import GestionCajeros from './GestionCajeros.vue';
+import GestionVentanillas from './GestionVentanillas.vue';
 
+const pestanaActual = ref('dashboard');
 const sedeNombre = ref('Cargando...');
 const stats = ref(null);
 const sedeIdActual = ref(null);

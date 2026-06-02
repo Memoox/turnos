@@ -61,7 +61,7 @@ const consultarPerfil = async () => {
         console.error("Error trayendo los datos de sesión:", error);
         // Si hay error de sesión (cookie vencida o similar), limpiamos y expulsamos
         localStorage.removeItem('user_rol');
-        router.push('/login');
+        
     }
 };
 

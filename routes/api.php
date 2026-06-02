@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdminCajeroController;
+use App\Http\Controllers\AdminCajaController;
 
 // --- RUTAS PÚBLICAS ---
 // Autenticación
@@ -33,5 +35,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/dashboard/superadmin', [DashboardController::class, 'superadminStats']);
     
-    
+    // RUTAS PARA LA GESTIÓN DE CAJEROS (Panel Admin)
+    Route::get('/admin/cajeros', [AdminCajeroController::class, 'index']);
+    Route::post('/admin/cajeros', [AdminCajeroController::class, 'store']);
+    Route::put('/admin/cajeros/{id}', [AdminCajeroController::class, 'update']);
+    Route::delete('/admin/cajeros/{id}', [AdminCajeroController::class, 'destroy']);
+
+    // RUTAS PARA LA GESTIÓN DE VENTANILLAS (Panel Admin)
+    Route::get('/admin/cajas', [AdminCajaController::class, 'index']);
+    Route::post('/admin/cajas', [AdminCajaController::class, 'store']);
+    Route::put('/admin/cajas/{id}', [AdminCajaController::class, 'update']);
+    Route::delete('/admin/cajas/{id}', [AdminCajaController::class, 'destroy']);
 });
