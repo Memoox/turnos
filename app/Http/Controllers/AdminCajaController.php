@@ -13,7 +13,7 @@ class AdminCajaController extends Controller
     {
         $admin = $request->user();
 
-        $cajas = Caja::with('tiposTurnos')
+        $cajas = Caja::with('tiposDeTurno')
             ->where('sede_id', $admin->sede_id)
             ->get();
 
@@ -22,7 +22,7 @@ class AdminCajaController extends Controller
         return response()->json([
             'status' => 'ok',
             'cajas' => $cajas,
-            'tipos_turnos' => $tiposTurnos
+            'tipo_turnos' => $tiposTurnos
         ]);
     }
 
@@ -33,8 +33,8 @@ class AdminCajaController extends Controller
 
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'tipos_turnos' => 'array', // Validamos que manden un arreglo de IDs
-            'tipos_turnos.*' => 'exists:tipos_turnos,id'
+            'tipo_turnos' => 'array', // Validamos que manden un arreglo de IDs
+            'tipo_turnos.*' => 'exists:tipo_turnos,id'
         ]);
 
         $nuevaCaja = Caja::create([
@@ -42,10 +42,14 @@ class AdminCajaController extends Controller
             'sede_id' => $admin->sede_id, // Candado de seguridad
         ]);
 
+        if ($request->has('tipo_turnos')) {
+            $nuevaCaja->tiposDeTurno()->sync($request->tipo_turnos);
+        }
+
         return response()->json([
             'status' => 'ok',
             'message' => 'Ventanilla creada exitosamente',
-            'caja' => $nuevaCaja
+            'caja' => $nuevaCaja->load('tiposDeTurno')
         ]);
     }
 
@@ -58,16 +62,22 @@ class AdminCajaController extends Controller
         $caja = Caja::where('sede_id', $admin->sede_id)->findOrFail($id);
 
         $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'tipo_turnos' => 'array',
+            'tipo_turnos.*' => 'exists:tipo_turnos,id'
         ]);
 
         $caja->nombre = $request->nombre;
         $caja->save();
 
+        if ($request->has('tipo_turnos')) {
+            $caja->tiposDeTurno()->sync($request->tipo_turnos);
+        }
+
         return response()->json([
             'status' => 'ok',
             'message' => 'Ventanilla actualizada correctamente',
-            'caja' => $caja
+            'caja' => $caja->load('tiposDeTurno')
         ]);
     }
 
