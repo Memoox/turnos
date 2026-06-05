@@ -42,7 +42,7 @@ class AdminCajeroController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'caja_id' => 'nullable|exists:cajas,id'
+            'caja_id' => 'nullable|exists:cajas,id|unique:users,caja_id'
         ]);
 
         // Buscamos el ID del rol 'cajero' en la base de datos
@@ -74,8 +74,8 @@ class AdminCajeroController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$cajero->id,
-            'caja_id' => 'nullable|exists:cajas,id',
-            'password' => 'nullable|string|min:6' // Opcional por si quiere cambiar la clave
+            'password' => 'nullable|string|min:6', // Opcional por si quiere cambiar la clave
+            'caja_id' => 'nullable|exists:cajas,id|unique:users,caja_id,'.$cajero->id,
         ]);
 
         $cajero->name = $request->name;
@@ -100,6 +100,9 @@ class AdminCajeroController extends Controller
     {
         $admin = $request->user();
         $cajero = User::where('sede_id', $admin->sede_id)->findOrFail($id);
+        
+        $cajero->caja_id = null;
+        $cajero->save();
         
         $cajero->delete();
 

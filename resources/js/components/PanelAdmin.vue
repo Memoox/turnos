@@ -54,7 +54,7 @@
         </div>
 
         <div v-if="pestanaActual === 'dashboard'">
-            
+            <DashboardAdmin />
         </div>
 
         <div v-if="pestanaActual === 'personal'">
@@ -72,6 +72,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import GestionCajeros from './GestionCajeros.vue';
 import GestionVentanillas from './GestionVentanillas.vue';
+import DashboardAdmin from './DashboardAdmin.vue'
 
 const pestanaActual = ref('dashboard');
 const sedeNombre = ref('Cargando...');

@@ -31,7 +31,7 @@
                     </td>
                     <td style="padding: 12px; text-align: center;">
                         <button @click="editarCajero(cajero)" style="margin-right: 10px; padding: 6px 12px; background: #eab308; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️ Editar</button>
-                        <button @click="eliminarCajero(cajero.id)" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">🗑️ Bajar</button>
+                        <button @click="eliminarCajero(cajero.id)" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">🗑️ Baja</button>
                     </td>
                 </tr>
                 <tr v-if="cajeros.length === 0">
@@ -64,7 +64,7 @@
                         <label style="font-size: 14px; font-weight: bold; color: #475569;">Asignar Ventanilla:</label>
                         <select v-model="form.caja_id" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px;">
                             <option value="">-- Sin ventanilla (Descanso) --</option>
-                            <option v-for="caja in cajas" :key="caja.id" :value="caja.id">
+                            <option v-for="caja in cajasDisponibles" :key="caja.id" :value="caja.id">
                                 {{ caja.nombre }}
                             </option>
                         </select>
@@ -82,8 +82,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const cajeros = ref([]);
 const cajas = ref([]);
@@ -139,22 +140,86 @@ const guardarCajero = async () => {
         }
         mostrarModal.value = false;
         cargarDatos(); // Recargar la tabla
+
+        Swal.fire({
+            icon: 'success',
+            title: '¡Guardado!',
+            text: 'El personal se guardó correctamente.',
+            // timer: 3000,
+            showConfirmButton: true   //false
+        });
     } catch (error) {
-        alert("Error al guardar los datos. Revisa la consola.");
-        console.error(error);
+        // DETECTAMOS ERRORES DE VALIDACIÓN (422)
+        if (error.response && error.response.status === 422) {
+            const erroresDeLaravel = error.response.data.errors;
+            let mensajeAmigable = "";
+            
+            for (const campo in erroresDeLaravel) {
+                mensajeAmigable += `• ${erroresDeLaravel[campo][0]}\n`;
+            }
+            
+            // ALERTA DE ADVERTENCIA PARA EL FORMULARIO
+            Swal.fire({
+                icon: 'warning',
+                title: 'Verifica tus datos',
+                text: mensajeAmigable,
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            // ALERTA DE ERROR CRÍTICO O DE RED
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de servidor',
+                text: error.response?.data?.message || 'Ocurrió un problema inesperado.',
+                confirmButtonColor: '#ef4444'
+            });
+        }
     }
 };
 
 const eliminarCajero = async (id) => {
-    if (confirm("¿Estás seguro de que deseas dar de baja a este cajero?")) {
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "El cajero será dado de baja y perderá su acceso al sistema.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Sí, dar de baja',
+        cancelButtonText: 'Cancelar'
+    });
+
+    // SI EL USUARIO DICE QUE SÍ
+    if (result.isConfirmed) {
         try {
             await axios.delete(`/api/admin/cajeros/${id}`);
             cargarDatos();
+            
+            Swal.fire(
+                '¡Eliminado!',
+                'El cajero ha sido dado de baja exitosamente.',
+                'success'
+            );
         } catch (error) {
-            console.error("Error al eliminar", error);
+            Swal.fire('Error', 'No se pudo eliminar al cajero.', 'error');
         }
     }
 };
+
+const cajasDisponibles = computed(() => {
+    return cajas.value.filter(caja => {
+        // 1. Verificamos si alguien ya tiene esta caja
+        const estaOcupada = cajeros.value.some(c => c.caja_id === caja.id);
+        
+        // 2. Si estamos editando a un cajero, SÍ debemos mostrarle su propia caja actual
+        if (modoEdicion.value && form.value.caja_id === caja.id) {
+            return true;
+        }
+        
+        // 3. Solo devolvemos las que NO están ocupadas
+        return !estaOcupada;
+    });
+});
 
 onMounted(() => {
     cargarDatos();
