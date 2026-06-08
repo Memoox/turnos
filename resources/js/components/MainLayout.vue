@@ -9,7 +9,7 @@
             
             <div style="display: flex; align-items: center; gap: 20px;">
                 <span style="color: #64748b; font-size: 14px; font-weight: bold; background: #f1f5f9; padding: 5px 10px; border-radius: 6px;">
-                    Rol: {{ rolUsuario }}
+                 {{ rolUsuario }}
                 </span>
                 <button @click="cerrarSesion" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
                     🚪 Cerrar Sesión

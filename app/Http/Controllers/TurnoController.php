@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Events\TurnoLlamado;
 use App\Events\TurnoGenerado;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 
 class TurnoController extends Controller
@@ -195,6 +196,7 @@ class TurnoController extends Controller
             $conteos = Turno::select('tipo_turno_id', DB::raw('count(*) as total'))
                 ->where('sede_id', $sede_id)
                 ->where('status', 0) // status 0 = En espera
+                ->whereDate('created_at', Carbon::today())
                 ->groupBy('tipo_turno_id')
                 ->pluck('total', 'tipo_turno_id'); // Devuelve [1 => 5, 2 => 10, etc.]
 

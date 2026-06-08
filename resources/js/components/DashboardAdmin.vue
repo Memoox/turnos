@@ -123,16 +123,10 @@ onMounted(() => {
     // Al abrir la pantalla, traemos los datos de la base de datos
     cargarDashboard();
 
-    window.Echo.channel('canal-turnos')
-        .listen('TurnoGenerado', (evento) => {
-            console.log('🔔 Reverb: ¡Alguien sacó un boleto! Actualizando monitor...');
-            cargarDashboard(); // Esto refresca las tarjetas al instante
-        })
-        // Aquí puedes agregar más "timbres" en el futuro
-        .listen('TurnoLlamado', (evento) => {
-            console.log('🔔 Reverb: ¡Un cajero llamó a alguien! Actualizando monitor...');
-            cargarDashboard();
-        });
+});
+
+defineExpose({
+    cargarDashboard
 });
 </script>
 

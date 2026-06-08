@@ -36,6 +36,20 @@ class DashboardController extends Controller
             ->whereNotNull('caja_id')
             ->count();
 
+        $promediosHoy = Turno::where('sede_id', $sedeId)
+            ->whereDate('created_at', $hoy)
+            ->whereIn('status', [1, 2]) // Los que ya fueron llamados o terminaron
+            ->get()
+            ->groupBy('tipo_turno_id')
+            ->map(function ($turnos) {
+                // Sacamos el promedio de minutos que esperó cada turno
+                $promedio = $turnos->avg(function ($turno) {
+                    // diffInMinutes es una función nativa mágica de Carbon
+                    return $turno->created_at->diffInMinutes($turno->updated_at);
+                });
+                return round($promedio); // Redondeamos para evitar decimales (ej. 5.33 min)
+            });
+
         // ==========================================
         // 2. CUADRÍCULA DE VENTANILLAS
         // ==========================================
@@ -62,27 +76,35 @@ class DashboardController extends Controller
                 'nombre' => $caja->nombre,
                 'cajero' => $cajero ? ['name' => $cajero->name] : null,
                 // Ajusta 'folio' al nombre real de la columna de tu BD (ej. clave_turno)
-                'turno_actual' => $turnoActual ? $turnoActual->folio : null 
+                'turno_actual' => $turnoActual ? $turnoActual->numero_turno : null 
             ];
         });
 
         // ==========================================
         // 3. LA FILA POR TRÁMITE (AGRUPACIÓN)
         // ==========================================
-        $fila = Turno::with('tipoTurno') // Asegúrate de tener la relación tipoTurno() en el modelo Turno
+        $fila = Turno::with('tipoTurno')
             ->where('sede_id', $sedeId)
             ->whereDate('created_at', $hoy)
             ->where('status', 0) // Solo los que están en espera
             ->get()
             ->groupBy('tipo_turno_id')
-            ->map(function ($turnos) {
-                // Fíjate que uso 'descripcion' como me comentaste que se llama en tu BD
+            ->map(function ($turnos) use ($promediosHoy) {
+                
+                $tipoId = $turnos->first()->tipo_turno_id;
                 $nombreTramite = $turnos->first()->tipoTurno->descripcion ?? 'Desconocido';
+
+                // Buscamos si ya tenemos un promedio calculado para este trámite hoy
+                $minutos = $promediosHoy->get($tipoId);
+                
+                // Si nadie ha pasado hoy a este trámite, mostramos "Calculando..."
+                $textoTiempo = $minutos !== null ? $minutos . ' min' : 'Calculando...';
+
                 return [
-                    'id' => $turnos->first()->tipo_turno_id,
+                    'id' => $tipoId,
                     'nombre' => $nombreTramite,
                     'cantidad' => $turnos->count(),
-                    'tiempoPromedio' => '--' 
+                    'tiempoPromedio' => $textoTiempo 
                 ];
             })->values();
 
