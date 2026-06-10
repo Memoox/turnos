@@ -139,8 +139,22 @@ const guardarCaja = async () => {
         mostrarModal.value = false;
         cargarDatos(); 
     } catch (error) {
-        alert("Error al guardar los datos.");
-        console.error(error);
+        // Verificamos si es un error de validación de Laravel (Código 422)
+        if (error.response && error.response.status === 422) {
+            const erroresDeLaravel = error.response.data.errors;
+            let mensajeAlerta = "";
+            
+            // Recorremos los errores y los juntamos (ej. "El nombre ya está en uso")
+            for (let campo in erroresDeLaravel) {
+                mensajeAlerta += erroresDeLaravel[campo][0] + "\n"; 
+            }
+            
+            // Aquí puedes usar SweetAlert si lo prefieres: Swal.fire('Oops...', mensajeAlerta, 'error')
+            alert(mensajeAlerta); 
+        } else {
+            console.error("Error grave:", error);
+            alert("Ocurrió un error inesperado al guardar la ventanilla.");
+        }
     }
 };
 

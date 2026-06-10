@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminCajeroController;
 use App\Http\Controllers\AdminCajaController;
+use App\Http\Controllers\SuperadminSedeController;
 
 // --- RUTAS PÚBLICAS ---
 // Autenticación
@@ -30,10 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     
     Route::post('/turnos/atender', [TurnoController::class, 'atenderTurno']);
-
     Route::get('/dashboard/admin', [DashboardController::class, 'adminStats']);
-
     Route::get('/dashboard/superadmin', [DashboardController::class, 'superadminStats']);
+    Route::post('/turnos/finalizar', [TurnoController::class, 'finalizarTurno']);
     
     // RUTAS PARA LA GESTIÓN DE CAJEROS (Panel Admin)
     Route::get('/admin/cajeros', [AdminCajeroController::class, 'index']);
@@ -46,4 +46,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/cajas', [AdminCajaController::class, 'store']);
     Route::put('/admin/cajas/{id}', [AdminCajaController::class, 'update']);
     Route::delete('/admin/cajas/{id}', [AdminCajaController::class, 'destroy']);
+
+    // RUTAS DEL SÚPER ADMINISTRADOR
+    Route::prefix('superadmin')->group(function () {
+    
+        // Gestión de Sedes
+        Route::get('/sedes', [SuperadminSedeController::class, 'index']);
+        Route::post('/sedes', [SuperadminSedeController::class, 'store']);
+        Route::put('/sedes/{id}', [SuperadminSedeController::class, 'update']);
+        Route::put('/sedes/{id}/toggle', [SuperadminSedeController::class, 'toggleStatus']);
+    
+    });
 });

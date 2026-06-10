@@ -64,6 +64,7 @@ class TurnoController extends Controller
             // 3. LA BÚSQUEDA DEL SIGUIENTE TURNO (Con bloqueo anti-colisiones)
             $nuevoTurno = Turno::where('sede_id', $user->sede_id)
                                ->where('status', 0) // Que esté pendiente
+                               ->whereDate('created_at', Carbon::today())
                                ->whereIn('tipo_turno_id', $tiposPermitidos) // Que la caja pueda atenderlo
                                ->oldest() // Laravel usa created_at automáticamente para FIFO
                                ->lockForUpdate() // Evita que otro cajero lo robe al mismo tiempo
@@ -192,16 +193,27 @@ class TurnoController extends Controller
     public function turnosPendientes($sede_id)
     {
         try {
+            $user = Auth::user();
             // UN SOLO VIAJE A LA BD: Agrupamos y contamos por tipo de turno
-            $conteos = Turno::select('tipo_turno_id', DB::raw('count(*) as total'))
+            $query = Turno::select('tipo_turno_id', DB::raw('count(*) as total'))
                 ->where('sede_id', $sede_id)
                 ->where('status', 0) // status 0 = En espera
-                ->whereDate('created_at', Carbon::today())
-                ->groupBy('tipo_turno_id')
-                ->pluck('total', 'tipo_turno_id'); // Devuelve [1 => 5, 2 => 10, etc.]
+                ->whereDate('created_at', Carbon::today());
 
-            // Mapeamos dinámicamente usando el ID del tipo de turno
-            // (Si el día de mañana agregas un tipo 8, no tienes que modificar este código)
+            if ($user && $user->caja_id) {
+                $tiposPermitidos = DB::table('caja_tipo_turno')
+                    ->where('caja_id', $user->caja_id)
+                    ->pluck('tipo_turno_id')
+                    ->toArray();
+
+                $query->whereIn('tipo_turno_id', $tiposPermitidos);
+            }
+
+            $conteos = $query->groupBy('tipo_turno_id')
+                ->pluck('total', 'tipo_turno_id');
+               
+
+           
             return response()->json([
                 "status" => "ok",
                 "message" => "Turnos obtenidos con éxito",
@@ -266,5 +278,45 @@ class TurnoController extends Controller
             // Devolvemos solo los tipos de turno habilitados para esta sede
             'tipos_turno' => $sede->tiposTurno 
         ]);
+    }
+
+    public function finalizarTurno(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->caja_id) {
+            return response()->json(['status' => 'error', 'message' => 'No tienes una ventanilla asignada'], 400);
+        }
+
+        try {
+            // Buscamos el turno que este cajero tiene en atención (status = 1)
+            $turnoActual = Turno::where('sede_id', $user->sede_id)
+                ->where('caja_id', $user->caja_id)
+                ->where('status', 1) 
+                ->first();
+
+            if ($turnoActual) {
+                $turnoActual->status = 2; // Lo marcamos como finalizado
+                $turnoActual->hora_atencion_fin = Carbon::now();
+                $turnoActual->save();
+
+                $cajaNombre = DB::table('cajas')->where('id', $user->caja_id)->value('nombre');
+                // Aquí podrías disparar un evento Reverb "TurnoFinalizado" si quieres
+                // broadcast(new TurnoFinalizado($user->sede_id))->toOthers(); 
+                TurnoLlamado::dispatch($user->sede_id, $turnoActual->numero_turno, $cajaNombre);
+            }
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Atención finalizada correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al finalizar el turno',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

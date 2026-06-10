@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Caja;
 use App\Models\TipoTurno;
+use Illuminate\Validation\Rule;
 
 class AdminCajaController extends Controller
 {
@@ -32,9 +33,16 @@ class AdminCajaController extends Controller
         $admin = $request->user();
 
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo_turnos' => 'array', // Validamos que manden un arreglo de IDs
-            'tipo_turnos.*' => 'exists:tipo_turnos,id'
+            'nombre' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('cajas')->where(function ($query) use ($admin) {
+                    return $query->where('sede_id', $admin->sede_id);
+                })
+            ],
+            'tipo_turnos' => 'array', 
+            'tipo_turnos.*' => 'exists:tipo_turnos,id',
         ]);
 
         $nuevaCaja = Caja::create([
@@ -62,9 +70,16 @@ class AdminCajaController extends Controller
         $caja = Caja::where('sede_id', $admin->sede_id)->findOrFail($id);
 
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo_turnos' => 'array',
-            'tipo_turnos.*' => 'exists:tipo_turnos,id'
+          'nombre' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('cajas')->where(function ($query) use ($admin) {
+                    return $query->where('sede_id', $admin->sede_id);
+                })->ignore($id)
+            ],
+            'tipo_turnos' => 'array', 
+            'tipo_turnos.*' => 'exists:tipo_turnos,id',
         ]);
 
         $caja->nombre = $request->nombre;

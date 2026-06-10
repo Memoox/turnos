@@ -32,6 +32,10 @@
         <div v-if="turnoActual" style="margin-top: 50px; padding-top: 30px; border-top: 2px dashed #ccc;">
             <h3 style="color: #4b5563;">Atendiendo actualmente a:</h3>
             <h1 style="font-size: 80px; color: #2563eb; margin: 10px 0;">{{ turnoActual }}</h1>
+
+            <button @click="terminarTurno" style="background: white; color: #ef4444; border: 2px solid #ef4444; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px;">
+                Cerrar Turno (Liberar Ventanilla)
+            </button>
         </div>
 
     </div>
@@ -104,6 +108,19 @@ const llamarSiguiente = async () => {
     } catch (error) {
         console.error("Error al atender:", error);
         alert(error.response?.data?.message || "Ocurrió un error al procesar el turno.");
+    }
+};
+
+const terminarTurno = async () => {
+    try {
+        const response = await axios.post('/api/turnos/finalizar');
+        
+        if (response.data.status === 'ok') {
+            turnoActual.value = null; // Vaciamos la pantalla local
+            alert('¡Turno finalizado! Ventanilla libre.');
+        }
+    } catch (error) {
+        console.error("Error al finalizar turno:", error);
     }
 };
 
