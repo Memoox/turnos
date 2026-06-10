@@ -7,6 +7,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminCajeroController;
 use App\Http\Controllers\AdminCajaController;
 use App\Http\Controllers\SuperadminSedeController;
+use App\Http\Controllers\SuperadminTipoTurnoController;
+use App\Http\Controllers\SuperadminUserController;
+use App\Http\Controllers\SuperadminDashboardController;
 
 // --- RUTAS PÚBLICAS ---
 // Autenticación
@@ -55,6 +58,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/sedes', [SuperadminSedeController::class, 'store']);
         Route::put('/sedes/{id}', [SuperadminSedeController::class, 'update']);
         Route::put('/sedes/{id}/toggle', [SuperadminSedeController::class, 'toggleStatus']);
+
+        // Gestión de Trámites (Tipos de Turno)
+        Route::get('/tramites', [SuperadminTipoTurnoController::class, 'index']);
+        Route::post('/tramites', [SuperadminTipoTurnoController::class, 'store']);
+        Route::put('/tramites/{id}', [SuperadminTipoTurnoController::class, 'update']);
+        Route::put('/tramites/{id}/toggle', [SuperadminTipoTurnoController::class, 'toggleStatus']);
+
+        // Gestión de Usuarios (Administradores y Cajeros)
+        Route::get('/usuarios', [SuperadminUserController::class, 'index']);
+        Route::post('/usuarios', [SuperadminUserController::class, 'store']);
+        Route::put('/usuarios/{id}', [SuperadminUserController::class, 'update']);
+        Route::put('/usuarios/{id}/toggle', [SuperadminUserController::class, 'toggleStatus']);
+
+        Route::get('/dashboard', [SuperadminDashboardController::class, 'getMapaGlobal']);
     
     });
 });

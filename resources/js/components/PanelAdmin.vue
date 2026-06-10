@@ -1,6 +1,6 @@
 <template>
     
-    <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto;">
+    <div style="font-family: sans-serif; max-width: 1300px; margin: 0 auto;">
         
         <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
             <button 

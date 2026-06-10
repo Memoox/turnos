@@ -14,7 +14,7 @@
                     <th style="padding: 12px; width: 10%;">ID</th>
                     <th style="padding: 12px; width: 30%;">Nombre</th>
                     <th style="padding: 12px; width: 40%;">Trámites Asignados</th>
-                    <th style="padding: 12px; text-align: center; width: 20%;">Acciones</th>
+                    <th style="padding: 12px; text-align: right; width: 20%;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,7 +32,7 @@
                             </span>
                         </div>
                     </td>
-                    <td style="padding: 12px; text-align: center;">
+                    <td style="padding: 12px; text-align: right; white-space: nowrap; width: 1%;">
                         <button @click="editarCaja(caja)" style="margin-right: 8px; padding: 6px 12px; background: #eab308; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️</button>
                         <button @click="eliminarCaja(caja.id)" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">🗑️</button>
                     </td>

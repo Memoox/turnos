@@ -14,7 +14,7 @@
                     <th style="padding: 12px;">Nombre</th>
                     <th style="padding: 12px;">Correo</th>
                     <th style="padding: 12px;">Ventanilla Asignada</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th style="padding: 12px; text-align: right;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -29,7 +29,7 @@
                             Sin asignar
                         </span>
                     </td>
-                    <td style="padding: 12px; text-align: center;">
+                    <td style="padding: 12px; text-align: right; white-space: nowrap; width: 1%;">
                         <button @click="editarCajero(cajero)" style="margin-right: 10px; padding: 6px 12px; background: #eab308; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️ Editar</button>
                         <button @click="eliminarCajero(cajero.id)" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">🗑️ Baja</button>
                     </td>

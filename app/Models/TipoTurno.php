@@ -16,4 +16,9 @@ class TipoTurno extends Model
     {
         return $this->belongsToMany(Caja::class, 'caja_tipo_turno');
     }
+
+    public function sedes()
+    {
+        return $this->belongsToMany(Sede::class, 'sede_tipo_turno');
+    }
 }

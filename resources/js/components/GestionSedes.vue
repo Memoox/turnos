@@ -52,7 +52,7 @@
                         <span v-if="sede.status" style="color: #16a34a; font-weight: bold; background: #dcfce7; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Activa</span>
                         <span v-else style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Inactiva</span>
                     </td>
-                    <td style="padding: 15px; text-align: right;">
+                    <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
                         <button @click="editarSede(sede)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
                             ✏️ Editar
                         </button>
