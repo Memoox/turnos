@@ -85,7 +85,7 @@ const formulario = ref({ id: null, nombre: '' });
 
 const Toast = Swal.mixin({
     toast: true,
-    position: 'top-end',
+    position: 'top',
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
@@ -177,7 +177,7 @@ const cambiarEstado = async (id) => {
     // Le preguntamos al usuario antes de disparar al backend
     const result = await Swal.fire({
         title: '¿Estás seguro?',
-        text: "Cambiarás el estado operativo de este registro.",
+        text: "Cambiarás el estado operativo de esta Sede.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#10b981',

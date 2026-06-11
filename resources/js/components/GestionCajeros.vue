@@ -86,6 +86,14 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top', // Centrado arriba como te gustó
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
+
 const cajeros = ref([]);
 const cajas = ref([]);
 
@@ -132,6 +140,11 @@ const editarCajero = (cajero) => {
 };
 
 const guardarCajero = async () => {
+    if (!form.value.name || !form.value.email) {
+        Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'El nombre y el correo son obligatorios.' });
+        return;
+    }
+
     try {
         if (modoEdicion.value) {
             await axios.put(`/api/admin/cajeros/${form.value.id}`, form.value);
@@ -141,38 +154,22 @@ const guardarCajero = async () => {
         mostrarModal.value = false;
         cargarDatos(); // Recargar la tabla
 
-        Swal.fire({
+        Toast.fire({
             icon: 'success',
-            title: '¡Guardado!',
-            text: 'El personal se guardó correctamente.',
-            // timer: 3000,
-            showConfirmButton: true   //false
+            title: modoEdicion.value ? 'Cajero actualizado' : 'Cajero registrado con éxito'
         });
+
+       
     } catch (error) {
-        // DETECTAMOS ERRORES DE VALIDACIÓN (422)
         if (error.response && error.response.status === 422) {
-            const erroresDeLaravel = error.response.data.errors;
-            let mensajeAmigable = "";
-            
-            for (const campo in erroresDeLaravel) {
-                mensajeAmigable += `• ${erroresDeLaravel[campo][0]}\n`;
-            }
-            
-            // ALERTA DE ADVERTENCIA PARA EL FORMULARIO
-            Swal.fire({
-                icon: 'warning',
-                title: 'Verifica tus datos',
-                text: mensajeAmigable,
-                confirmButtonColor: '#2563eb'
-            });
+            const errores = error.response.data.errors;
+            let msjHTML = "<ul style='text-align: left; color: #ef4444;'>";
+            for (let campo in errores) { msjHTML += `<li>${errores[campo][0]}</li>`; }
+            msjHTML += "</ul>";
+
+            Swal.fire({ icon: 'error', title: 'Error de validación', html: msjHTML, confirmButtonColor: '#3b82f6' });
         } else {
-            // ALERTA DE ERROR CRÍTICO O DE RED
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de servidor',
-                text: error.response?.data?.message || 'Ocurrió un problema inesperado.',
-                confirmButtonColor: '#ef4444'
-            });
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el cajero.', confirmButtonColor: '#3b82f6' });
         }
     }
 };

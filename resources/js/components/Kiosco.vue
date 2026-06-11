@@ -39,14 +39,41 @@
             <p style="color: #64748b; margin-top: 5px;">Por favor, tómalo y pasa a la sala de espera.</p>
         </div>
 
+        <div v-if="ticketImprimir" id="ticket-termico">
+        <div style="text-align: center; font-family: 'Courier New', Courier, monospace; color: black; line-height: 1.2;">
+            <h2 style="margin: 0; font-size: 16px; font-weight: bold;">PODER JUDICIAL</h2>
+            <p style="margin: 2px 0; font-size: 12px;">{{ ticketImprimir.sede }}</p>
+            <p style="margin: 0; font-size: 11px;">--------------------------------</p>
+            
+            <p style="margin: 10px 0 5px 0; font-size: 13px; font-weight: bold; text-transform: uppercase;">
+                {{ ticketImprimir.tramite_descripcion }}
+            </p>
+            
+            <p style="margin: 0; font-size: 11px;">SU TURNO ES:</p>
+            <h1 style="margin: 5px 0; font-size: 42px; font-weight: 900; letter-spacing: 1px;">
+                {{ ticketImprimir.turno }}
+            </h1>
+            
+            <p style="margin: 0; font-size: 11px;">--------------------------------</p>
+            <p style="margin: 5px 0 0 0; font-size: 11px;">Por favor, espere su llamado</p>
+            <p style="margin: 2px 0; font-size: 11px;">en la sala de espera.</p>
+            
+            <p style="margin: 15px 0 0 0; font-size: 10px; color: #555;">
+                {{ ticketImprimir.fecha_hora }}
+            </p>
+        </div>
     </div>
+
+    </div>
+
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
+const ticketImprimir = ref(null);
 const route = useRoute();
 const sedeId = route.params.sede_id; // Tomamos el ID de la URL (/kiosco/1)
 
@@ -80,6 +107,11 @@ const solicitarTurno = async (tipoTurnoId) => {
 
         if (response.data.status === 'ok') {
             turnoGenerado.value = response.data.turno.numero_turno; // ej: "D-001"
+
+            ticketImprimir.value = response.data.data_ticket;
+            await nextTick();
+            window.print();
+            ticketImprimir.value = null;
             
             // Ocultamos el mensaje después de 5 segundos
             setTimeout(() => {

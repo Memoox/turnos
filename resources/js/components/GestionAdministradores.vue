@@ -103,12 +103,47 @@
                 </tr>
             </tbody>
         </table>
+
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
+            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> usuarios registrados</span>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button 
+                    :disabled="paginaActual === 1" 
+                    @click="cargarUsuarios(paginaActual - 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === 1 ? '#f1f5f9' : 'white', color: paginaActual === 1 ? '#94a3b8' : '#334155' }">
+                    ⬅️ Anterior
+                </button>
+
+                <span style="padding: 0 10px; font-weight: bold; color: #3b82f6;">
+                    Pág {{ paginaActual }} de {{ ultimaPagina }}
+                </span>
+
+                <button 
+                    :disabled="paginaActual === ultimaPagina" 
+                    @click="cargarUsuarios(paginaActual + 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === ultimaPagina ? '#f1f5f9' : 'white', color: paginaActual === ultimaPagina ? '#94a3b8' : '#334155' }">
+                    Siguiente ➡️
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
 
 const usuarios = ref([]);
 const sedesDisponibles = ref([]);
@@ -118,11 +153,20 @@ const modoEdicion = ref(false);
 
 const formulario = ref({ id: null, name: '', email: '', password: '', rol_id: 2, sede_id: '' });
 
+const paginaActual = ref(1);
+const ultimaPagina = ref(1);
+const totalRegistros = ref(0);
+
 // 1. Cargar datos
-const cargarUsuarios = async () => {
+const cargarUsuarios = async (page = 1) => {
     try {
-        const response = await axios.get('/api/superadmin/usuarios');
-        usuarios.value = response.data.usuarios;
+        const response = await axios.get(`/api/superadmin/usuarios?page=${page}`);
+        usuarios.value = response.data.usuarios.data;
+
+        paginaActual.value = response.data.usuarios.current_page;
+        ultimaPagina.value = response.data.usuarios.last_page;
+        totalRegistros.value = response.data.usuarios.total;
+
         sedesDisponibles.value = response.data.sedes_disponibles;
     } catch (error) {
         console.error("Error al cargar usuarios:", error);
@@ -156,12 +200,12 @@ const cerrarModal = () => {
 // 3. Guardar
 const guardarUsuario = async () => {
     if (!formulario.value.name || !formulario.value.email) {
-        alert("Nombre y correo son obligatorios");
+        Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Nombre y correo son obligatorios.' });
         return;
     }
     // Validamos que los mortales (Admin/Cajero) tengan sede
     if (formulario.value.rol_id != 1 && !formulario.value.sede_id) {
-        alert("Debes asignar una sede para este rol.");
+        Swal.fire({ icon: 'warning', title: 'Falta Sede', text: 'Debes asignar una sede para este rol.' });
         return;
     }
 
@@ -174,31 +218,51 @@ const guardarUsuario = async () => {
         
         cerrarModal();
         cargarUsuarios();
+
+        Toast.fire({
+            icon: 'success',
+            title: modoEdicion.value ? 'Usuario actualizado' : 'Usuario registrado con éxito'
+        });
         
     } catch (error) {
         if (error.response && error.response.status === 422) {
             const errores = error.response.data.errors;
-            let msj = "";
-            for (let campo in errores) { msj += errores[campo][0] + "\n"; }
-            alert(msj);
+            let msjHTML = "<ul style='text-align: left; color: #ef4444;'>";
+            for (let campo in errores) { msjHTML += `<li>${errores[campo][0]}</li>`; }
+            msjHTML += "</ul>";
+
+            Swal.fire({ icon: 'error', title: 'Error en el formulario', html: msjHTML, confirmButtonColor: '#3b82f6' });
         } else {
-            console.error("Error al guardar:", error);
-            alert("Error al guardar el usuario.");
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el usuario.', confirmButtonColor: '#3b82f6' });
         }
     }
 };
 
 // 4. Baja Lógica
 const cambiarEstado = async (id) => {
-    try {
-        await axios.put(`/api/superadmin/usuarios/${id}/toggle`);
-        cargarUsuarios(); 
-    } catch (error) {
-        alert(error.response?.data?.message || "Ocurrió un error al intentar cambiar el estado.");
+    const result = await Swal.fire({
+        title: '¿Modificar acceso?',
+        text: "Deseas cambiar el estado del usuario en el sistema.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#ef4444',
+        confirmButtonText: 'Sí, cambiar estado',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await axios.put(`/api/superadmin/usuarios/${id}/toggle`);
+            cargarUsuarios(); 
+            Toast.fire({ icon: 'success', title: 'Acceso actualizado' });
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || "Ocurrió un error al intentar cambiar el estado.", 'error');
+        }
     }
 };
 
 onMounted(() => {
-    cargarUsuarios();
+    cargarUsuarios(1);
 });
 </script>

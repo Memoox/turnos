@@ -91,6 +91,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
 
 const tramites = ref([]);
 const sedesDisponibles = ref([]);
@@ -140,7 +149,7 @@ const cerrarModal = () => {
 // 3. Crear o Actualizar
 const guardarTramite = async () => {
     if (!formulario.value.clave.trim() || !formulario.value.descripcion.trim()) {
-        alert("La clave y la descripción son obligatorias");
+        Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'La clave y la descripción son obligatorias.' });
         return;
     }
 
@@ -153,28 +162,47 @@ const guardarTramite = async () => {
         
         cerrarModal();
         cargarTramites();
+
+        Toast.fire({
+            icon: 'success',
+            title: modoEdicion.value ? 'Trámite actualizado' : 'Trámite creado con éxito'
+        });
         
     } catch (error) {
         if (error.response && error.response.status === 422) {
             const errores = error.response.data.errors;
-            let msj = "";
-            for (let campo in errores) { msj += errores[campo][0] + "\n"; }
-            alert(msj);
+            let msjHTML = "<ul style='text-align: left; color: #ef4444;'>";
+            for (let campo in errores) { msjHTML += `<li>${errores[campo][0]}</li>`; }
+            msjHTML += "</ul>";
+
+            Swal.fire({ icon: 'error', title: 'Verifica los datos', html: msjHTML, confirmButtonColor: '#3b82f6' });
         } else {
-            console.error("Error al guardar:", error);
-            alert("Error al guardar el trámite.");
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error al guardar.', confirmButtonColor: '#3b82f6' });
         }
     }
 };
 
 // 4. SoftDelete
 const cambiarEstado = async (id) => {
-    try {
-        await axios.put(`/api/superadmin/tramites/${id}/toggle`);
-        cargarTramites(); 
-    } catch (error) {
-        console.error("Error al cambiar el estado:", error);
-        alert("Ocurrió un error al intentar cambiar el estado.");
+    const result = await Swal.fire({
+        title: '¿Cambiar estado operativo?',
+        text: "Los cajeros ya no podrán ver este trámite si lo das de baja.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#ef4444',
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await axios.put(`/api/superadmin/tramites/${id}/toggle`);
+            cargarTramites(); 
+            Toast.fire({ icon: 'success', title: 'Estado actualizado' });
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
+        }
     }
 };
 

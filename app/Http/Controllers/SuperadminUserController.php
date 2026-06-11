@@ -15,7 +15,13 @@ class SuperadminUserController extends Controller
     {
         try {
             // Traemos los usuarios con su sede y ordenados por los más recientes
-            $usuarios = User::with('sede')->withTrashed()->orderBy('id', 'desc')->get()->map(function ($user) {
+            $usuarios = User::with('sede')
+                ->withTrashed()
+                ->orderBy('id', 'desc')
+                ->paginate(5);
+
+            // 2. Transformamos internamente los datos sin destruir la paginación
+            $usuarios->getCollection()->transform(function ($user) {
                 $user->is_active = !$user->trashed(); 
                 return $user;
             });

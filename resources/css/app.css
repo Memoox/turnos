@@ -26,3 +26,37 @@
     transform: scale(0.85);        
     margin: 1em auto 0.5em !important;
 }
+
+/* Estilos normales de pantalla: El ticket está escondido */
+#ticket-termico {
+    display: none;
+}
+
+/* REGLAS EXCLUSIVAS PARA CUANDO SE DISPARA LA IMPRESORA */
+@media print {
+    /* Ocultamos absolutamente todo el diseño del Kiosco (botones, fondos, logos) */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Hacemos que únicamente el bloque del ticket sea visible */
+    #ticket-termico, #ticket-termico * {
+        visibility: visible;
+    }
+    
+    /* Posicionamos el ticket arriba a la izquierda eliminando márgenes de página del navegador */
+    #ticket-termico {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%; /* Se expande al ancho físico configurado en la miniprinter */
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Quitamos los molestos encabezados y pies de página que mete Chrome por defecto (fecha, url) */
+    @page {
+        margin: 0;
+    }
+}
