@@ -9,3 +9,20 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+
+.swal2-popup {
+    font-size: 0.85rem !important;
+    width: 26em !important;        
+    padding: 1.5em !important;     
+    border-radius: 12px !important;
+}
+
+.swal2-title {
+    font-size: 1.5em !important;
+}
+
+.swal2-icon {
+    transform: scale(0.85);        
+    margin: 1em auto 0.5em !important;
+}

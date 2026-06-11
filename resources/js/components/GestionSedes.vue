@@ -76,11 +76,21 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const sedes = ref([]);
 const mostrarModal = ref(false);
 const modoEdicion = ref(false);
 const formulario = ref({ id: null, nombre: '' });
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
+
 
 // 1. Cargar datos
 const cargarSedes = async () => {
@@ -112,7 +122,7 @@ const cerrarModal = () => {
 // 3. Crear o Actualizar
 const guardarSede = async () => {
     if (!formulario.value.nombre.trim()) {
-        alert("El nombre de la sede es obligatorio");
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'El nombre es obligatorio' });
         return;
     }
 
@@ -125,28 +135,70 @@ const guardarSede = async () => {
         
         cerrarModal();
         cargarSedes();
+
+        Toast.fire({
+            icon: 'success',
+            title: modoEdicion.value ? 'Sede actualizada con éxito' : 'Sede creada con éxito'
+        });
         
     } catch (error) {
         if (error.response && error.response.status === 422) {
             const errores = error.response.data.errors;
-            let msj = "";
-            for (let campo in errores) { msj += errores[campo][0] + "\n"; }
-            alert(msj);
+            let msjHTML = "<ul style='text-align: left; color: #ef4444;'>";
+            
+            // Convertimos los errores en una lista HTML
+            for (let campo in errores) { 
+                msjHTML += `<li>${errores[campo][0]}</li>`; 
+            }
+            msjHTML += "</ul>";
+
+            // Lanzamos el modal de error de SweetAlert
+            Swal.fire({
+                icon: 'error',
+                title: 'Verifica los datos',
+                html: msjHTML,
+                confirmButtonColor: '#3b82f6',
+                confirmButtonText: 'Entendido'
+            });
         } else {
             console.error("Error al guardar:", error);
-            alert("Error al guardar la sede.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Error del sistema',
+                text: 'Ocurrió un error inesperado. Contacta al administrador.',
+                confirmButtonColor: '#3b82f6'
+            });
         }
     }
 };
 
 // 4. Dar de baja / Reactivar (SoftDelete)
 const cambiarEstado = async (id) => {
-    try {
-        await axios.put(`/api/superadmin/sedes/${id}/toggle`);
-        cargarSedes(); // Recargamos para reflejar el nuevo status
-    } catch (error) {
-        console.error("Error al cambiar el estado de la sede:", error);
-        alert("Ocurrió un error al intentar cambiar el estado.");
+    // Le preguntamos al usuario antes de disparar al backend
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Cambiarás el estado operativo de este registro.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#ef4444',
+        confirmButtonText: 'Sí, cambiar estado',
+        cancelButtonText: 'Cancelar'
+    });
+
+    // Si el usuario dijo que sí, ejecutamos el Axios
+    if (result.isConfirmed) {
+        try {
+            await axios.put(`/api/superadmin/sedes/${id}/toggle`);
+            cargarSedes(); 
+            
+            Toast.fire({
+                icon: 'success',
+                title: 'Estado actualizado'
+            });
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
+        }
     }
 };
 
