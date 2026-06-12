@@ -1,11 +1,16 @@
 <template>
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
             <h2 style="margin: 0; color: #1e293b;">🏢 Catálogo de Sedes</h2>
-            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                ➕ Nueva Sede
-            </button>
+            
+            <div style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
+                <input type="text" v-model="buscador" @keyup.enter="cargarSedes(1)" placeholder="🔍 Buscar por nombre..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
+                <button @click="cargarSedes(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">Buscar</button>
+                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">✖</button>
+            </div>
+
+            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">➕ Nueva Sede</button>
         </div>
 
         <div v-if="mostrarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
@@ -42,14 +47,14 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="sede in sedes" :key="sede.id" style="border-bottom: 1px solid #e2e8f0;" :style="{ opacity: sede.status ? '1' : '0.6' }">
+                <tr v-for="sede in sedes" :key="sede.id" style="border-bottom: 1px solid #e2e8f0;" :style="{ opacity: sede.is_active ? '1' : '0.6' }">
                     <td style="padding: 15px; color: #64748b;">{{ sede.id }}</td>
                     <td style="padding: 15px; font-weight: bold; color: #334155;">
-                        <span v-if="!sede.status" style="text-decoration: line-through; color: #94a3b8;">{{ sede.nombre }}</span>
+                        <span v-if="!sede.is_active" style="text-decoration: line-through; color: #94a3b8;">{{ sede.nombre }}</span>
                         <span v-else>{{ sede.nombre }}</span>
                     </td>
                     <td style="padding: 15px;">
-                        <span v-if="sede.status" style="color: #16a34a; font-weight: bold; background: #dcfce7; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Activa</span>
+                        <span v-if="sede.is_active" style="color: #16a34a; font-weight: bold; background: #dcfce7; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Activa</span>
                         <span v-else style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Inactiva</span>
                     </td>
                     <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
@@ -57,7 +62,7 @@
                             ✏️ Editar
                         </button>
                         
-                        <button v-if="sede.status" @click="cambiarEstado(sede.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        <button v-if="sede.is_active" @click="cambiarEstado(sede.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
                             ❌ Dar de baja
                         </button>
                         <button v-else @click="cambiarEstado(sede.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
@@ -70,6 +75,32 @@
                 </tr>
             </tbody>
         </table>
+
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
+            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> sedes registradas</span>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button 
+                    :disabled="paginaActual === 1" 
+                    @click="cargarSedes(paginaActual - 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === 1 ? '#f1f5f9' : 'white', color: paginaActual === 1 ? '#94a3b8' : '#334155' }">
+                    ⬅️ Anterior
+                </button>
+
+                <span style="padding: 0 10px; font-weight: bold; color: #3b82f6;">
+                    Pág {{ paginaActual }} de {{ ultimaPagina }}
+                </span>
+
+                <button 
+                    :disabled="paginaActual === ultimaPagina" 
+                    @click="cargarSedes(paginaActual + 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === ultimaPagina ? '#f1f5f9' : 'white', color: paginaActual === ultimaPagina ? '#94a3b8' : '#334155' }">
+                    Siguiente ➡️
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -91,12 +122,20 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
+const buscador = ref('');
+const paginaActual = ref(1);
+const ultimaPagina = ref(1);
+const totalRegistros = ref(0);
+
 
 // 1. Cargar datos
-const cargarSedes = async () => {
+const cargarSedes = async (page = 1) => {
     try {
-        const response = await axios.get('/api/superadmin/sedes');
-        sedes.value = response.data.sedes;
+        const response = await axios.get(`/api/superadmin/sedes?page=${page}&search=${buscador.value}`);
+        sedes.value = response.data.sedes.data;
+        paginaActual.value = response.data.sedes.current_page;
+        ultimaPagina.value = response.data.sedes.last_page;
+        totalRegistros.value = response.data.sedes.total;
     } catch (error) {
         console.error("Error al cargar sedes:", error);
     }
@@ -134,7 +173,7 @@ const guardarSede = async () => {
         }
         
         cerrarModal();
-        cargarSedes();
+        cargarSedes(1);
 
         Toast.fire({
             icon: 'success',
@@ -190,7 +229,7 @@ const cambiarEstado = async (id) => {
     if (result.isConfirmed) {
         try {
             await axios.put(`/api/superadmin/sedes/${id}/toggle`);
-            cargarSedes(); 
+            cargarSedes(1); 
             
             Toast.fire({
                 icon: 'success',
@@ -202,7 +241,12 @@ const cambiarEstado = async (id) => {
     }
 };
 
+const limpiarBuscador = () => {
+    buscador.value = '';
+    cargarSedes(1);
+};
+
 onMounted(() => {
-    cargarSedes();
+    cargarSedes(1);
 });
 </script>

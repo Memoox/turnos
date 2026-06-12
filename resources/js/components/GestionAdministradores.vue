@@ -1,8 +1,26 @@
 <template>
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <!-- ENCABEZADO Y BUSCADOR -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
             <h2 style="margin: 0; color: #1e293b;">👥 Catálogo de Usuarios</h2>
+            
+            <div style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
+                <input 
+                    type="text" 
+                    v-model="buscador" 
+                    @keyup.enter="cargarUsuarios(1)"
+                    placeholder="🔍 Buscar por nombre o correo..." 
+                    style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;"
+                >
+                <button @click="cargarUsuarios(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    Buscar
+                </button>
+                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; title: Limpiar búsqueda;">
+                    ✖
+                </button>
+            </div>
+
             <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
                 ➕ Nuevo Usuario
             </button>
@@ -157,12 +175,14 @@ const paginaActual = ref(1);
 const ultimaPagina = ref(1);
 const totalRegistros = ref(0);
 
+const buscador = ref('');
+
 // 1. Cargar datos
 const cargarUsuarios = async (page = 1) => {
     try {
-        const response = await axios.get(`/api/superadmin/usuarios?page=${page}`);
-        usuarios.value = response.data.usuarios.data;
+        const response = await axios.get(`/api/superadmin/usuarios?page=${page}&search=${buscador.value}`);
 
+        usuarios.value = response.data.usuarios.data;
         paginaActual.value = response.data.usuarios.current_page;
         ultimaPagina.value = response.data.usuarios.last_page;
         totalRegistros.value = response.data.usuarios.total;
@@ -260,6 +280,11 @@ const cambiarEstado = async (id) => {
             Swal.fire('Error', error.response?.data?.message || "Ocurrió un error al intentar cambiar el estado.", 'error');
         }
     }
+};
+
+const limpiarBuscador = () => {
+    buscador.value = '';
+    cargarUsuarios(1);
 };
 
 onMounted(() => {

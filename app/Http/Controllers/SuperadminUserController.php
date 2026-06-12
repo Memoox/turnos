@@ -11,22 +11,31 @@ use Illuminate\Validation\Rule;
 class SuperadminUserController extends Controller
 {
     // 1. Obtener todos los usuarios y catálogo de sedes
-    public function index()
+    public function index(Request $request)
     {
         try {
-            // Traemos los usuarios con su sede y ordenados por los más recientes
+            // 1. Capturamos lo que el usuario escribió (si no escribió nada, será null)
+            $search = $request->query('search');
+
+            // 2. Armamos la consulta inteligente
             $usuarios = User::with('sede')
                 ->withTrashed()
+                ->when($search, function ($query, $search) {
+                    // Si hay texto, buscamos coincidencias en nombre o email
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                    });
+                })
                 ->orderBy('id', 'desc')
-                ->paginate(5);
+                ->paginate(10);
 
-            // 2. Transformamos internamente los datos sin destruir la paginación
+            // 3. Transformamos la data de paginación
             $usuarios->getCollection()->transform(function ($user) {
                 $user->is_active = !$user->trashed(); 
                 return $user;
             });
 
-            // Para el formulario (dropdown de sedes)
             $sedes = Sede::orderBy('nombre', 'asc')->get();
             
             return response()->json([

@@ -9,16 +9,26 @@ use App\Models\Sede;
 class SuperadminTipoTurnoController extends Controller
 {
     // 1. Obtener todos los trámites (y la lista de sedes para el formulario)
-    public function index()
+    public function index(Request $request)
     {
         try {
-            // Traemos los trámites incluyendo las sedes donde están asignados
-            $tramites = TipoTurno::with('sedes')->withTrashed()->orderBy('id', 'desc')->get()->map(function ($tramite) {
-                $tramite->is_active = !$tramite->trashed(); 
+            $search = $request->query('search');
+
+            $tramites = TipoTurno::with('sedes')->withTrashed()
+                ->when($search, function ($query, $search) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('clave', 'like', "%{$search}%")
+                          ->orWhere('descripcion', 'like', "%{$search}%");
+                    });
+                })
+                ->orderBy('id', 'desc')
+                ->paginate(10);
+
+            $tramites->getCollection()->transform(function ($tramite) {
+                $tramite->is_active = !$tramite->trashed();
                 return $tramite;
             });
 
-            // También mandamos el catálogo de sedes activas para pintar los checkboxes en Vue
             $sedesDisponibles = Sede::orderBy('nombre', 'asc')->get();
             
             return response()->json([

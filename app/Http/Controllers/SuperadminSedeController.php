@@ -8,14 +8,20 @@ use App\Models\Sede;
 class SuperadminSedeController extends Controller
 {
     // 1. Obtener todas las sedes
-    public function index()
+    public function index(Request $request)
     {
         try {
-            // Usamos withTrashed() para ver también las inactivas
-            $sedes = Sede::withTrashed()->orderBy('id', 'desc')->get()->map(function ($sede) {
-                // Le agregamos la propiedad status al vuelo para Vue
-                // Si NO está en la papelera (trashed), status es true (Activa)
-                $sede->status = !$sede->trashed(); 
+            $search = $request->query('search');
+
+            $sedes = Sede::withTrashed()
+                ->when($search, function ($query, $search) {
+                    $query->where('nombre', 'like', "%{$search}%");
+                })
+                ->orderBy('id', 'desc')
+                ->paginate(10);
+
+            $sedes->getCollection()->transform(function ($sede) {
+                $sede->is_active = !$sede->trashed();
                 return $sede;
             });
             

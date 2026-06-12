@@ -1,11 +1,16 @@
 <template>
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #1e293b;">📑 Catálogo de Trámites</h2>
-            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                ➕ Nuevo Trámite
-            </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <h2 style="margin: 0; color: #1e293b;">📄 Catálogo de Trámites</h2>
+            
+            <div style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
+                <input type="text" v-model="buscador" @keyup.enter="cargarTramites(1)" placeholder="🔍 Buscar por clave o descripción..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
+                <button @click="cargarTramites(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">Buscar</button>
+                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">✖</button>
+            </div>
+
+            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">➕ Nuevo Trámite</button>
         </div>
 
         <div v-if="mostrarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
@@ -85,6 +90,32 @@
                 </tr>
             </tbody>
         </table>
+
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
+            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> trámites registrados</span>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button 
+                    :disabled="paginaActual === 1" 
+                    @click="cargarTramites(paginaActual - 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === 1 ? '#f1f5f9' : 'white', color: paginaActual === 1 ? '#94a3b8' : '#334155' }">
+                    ⬅️ Anterior
+                </button>
+
+                <span style="padding: 0 10px; font-weight: bold; color: #3b82f6;">
+                    Pág {{ paginaActual }} de {{ ultimaPagina }}
+                </span>
+
+                <button 
+                    :disabled="paginaActual === ultimaPagina" 
+                    @click="cargarTramites(paginaActual + 1)" 
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.2s;"
+                    :style="{ background: paginaActual === ultimaPagina ? '#f1f5f9' : 'white', color: paginaActual === ultimaPagina ? '#94a3b8' : '#334155' }">
+                    Siguiente ➡️
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -107,14 +138,22 @@ const sedesDisponibles = ref([]);
 const mostrarModal = ref(false);
 const modoEdicion = ref(false);
 
+const buscador = ref('');
+const paginaActual = ref(1);
+const ultimaPagina = ref(1);
+const totalRegistros = ref(0);
+
 // El formulario ahora incluye un arreglo de 'sedes'
 const formulario = ref({ id: null, clave: '', descripcion: '', sedes: [] });
 
 // 1. Cargar datos
-const cargarTramites = async () => {
+const cargarTramites = async (page = 1) => {
     try {
-        const response = await axios.get('/api/superadmin/tramites');
-        tramites.value = response.data.tramites;
+        const response = await axios.get(`/api/superadmin/tramites?page=${page}&search=${buscador.value}`);
+        tramites.value = response.data.tramites.data;
+        paginaActual.value = response.data.tramites.current_page;
+        ultimaPagina.value = response.data.tramites.last_page;
+        totalRegistros.value = response.data.tramites.total;
         sedesDisponibles.value = response.data.sedes_disponibles;
     } catch (error) {
         console.error("Error al cargar trámites:", error);
@@ -161,7 +200,7 @@ const guardarTramite = async () => {
         }
         
         cerrarModal();
-        cargarTramites();
+        cargarTramites(1);
 
         Toast.fire({
             icon: 'success',
@@ -198,7 +237,7 @@ const cambiarEstado = async (id) => {
     if (result.isConfirmed) {
         try {
             await axios.put(`/api/superadmin/tramites/${id}/toggle`);
-            cargarTramites(); 
+            cargarTramites(1); 
             Toast.fire({ icon: 'success', title: 'Estado actualizado' });
         } catch (error) {
             Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
@@ -206,7 +245,12 @@ const cambiarEstado = async (id) => {
     }
 };
 
+const limpiarBuscador = () => {
+    buscador.value = '';
+    cargarTramites(1);
+};
+
 onMounted(() => {
-    cargarTramites();
+    cargarTramites(1);
 });
 </script>
