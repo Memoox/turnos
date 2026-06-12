@@ -81,8 +81,11 @@
                     </td>
                     <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
                         <button @click="editarTramite(tramite)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
-                        <button v-if="tramite.is_active" @click="cambiarEstado(tramite.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">❌ Baja</button>
-                        <button v-else @click="cambiarEstado(tramite.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">✅ Reactivar</button>
+                        <button v-if="tramite.is_active" @click="cambiarEstado(tramite.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
+                        <button v-else @click="cambiarEstado(tramite.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
+                        <button @click="eliminarDefinitivo(tramite.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Sede">
+                            🗑️
+                        </button>
                     </td>
                 </tr>
                 <tr v-if="tramites.length === 0">
@@ -224,8 +227,8 @@ const guardarTramite = async () => {
 // 4. SoftDelete
 const cambiarEstado = async (id) => {
     const result = await Swal.fire({
-        title: '¿Cambiar estado operativo?',
-        text: "Los cajeros ya no podrán ver este trámite si lo das de baja.",
+        title: '¿Estás seguro?',
+        text: "Cambiarás el estado operativo de este trámite",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#10b981',
@@ -248,6 +251,33 @@ const cambiarEstado = async (id) => {
 const limpiarBuscador = () => {
     buscador.value = '';
     cargarTramites(1);
+};
+
+const eliminarDefinitivo = async (id) => {
+    const result = await Swal.fire({
+        title: '¿Destrucción Total?',
+        text: "Esto borrará el trámite permanentemente. Esta acción no se puede deshacer.",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Sí, destruir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await axios.delete(`/api/superadmin/tramites/${id}/force`);
+            cargarTramites(paginaActual.value); 
+            Toast.fire({ icon: 'success', title: 'Trámite destruido exitosamente' });
+        } catch (error) {
+            if (error.response && error.response.status === 400) {
+                Swal.fire({ icon: 'warning', title: 'Acción Denegada', text: error.response.data.message, confirmButtonColor: '#3b82f6' });
+            } else {
+                Swal.fire('Error', 'Ocurrió un problema al intentar eliminar.', 'error');
+            }
+        }
+    }
 };
 
 onMounted(() => {

@@ -14,6 +14,7 @@ class AdminCajeroController extends Controller
     public function index(Request $request)
     {
         $admin = $request->user();
+        $search = $request->query('search');
 
         // Traemos solo a los usuarios que son de la misma sede y tienen rol de cajero
         $cajeros = User::with('caja') // Eager loading para traer el nombre de su ventanilla

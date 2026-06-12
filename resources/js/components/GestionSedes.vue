@@ -62,11 +62,14 @@
                             ✏️ Editar
                         </button>
                         
-                        <button v-if="sede.is_active" @click="cambiarEstado(sede.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                            ❌ Dar de baja
+                        <button v-if="sede.is_active" @click="cambiarEstado(sede.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
+                            ❌ Baja
                         </button>
-                        <button v-else @click="cambiarEstado(sede.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        <button v-else @click="cambiarEstado(sede.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
                             ✅ Reactivar
+                        </button>
+                        <button @click="eliminarDefinitivo(sede.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Sede">
+                            🗑️
                         </button>
                     </td>
                 </tr>
@@ -237,6 +240,43 @@ const cambiarEstado = async (id) => {
             });
         } catch (error) {
             Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
+        }
+    }
+};
+
+const eliminarDefinitivo = async (id) => {
+    const result = await Swal.fire({
+        title: '¿Destrucción Total?',
+        text: "Esto borrará la sede de la base de datos permanentemente. Esta acción no se puede deshacer.",
+        icon: 'error', // Usamos el ícono de peligro
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626', // Rojo alerta
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Sí, destruir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await axios.delete(`/api/superadmin/sedes/${id}/force`);
+            
+            // Recargamos la tabla en la página actual
+            cargarSedes(paginaActual.value); 
+            
+            Toast.fire({ icon: 'success', title: 'Sede destruida exitosamente' });
+            
+        } catch (error) {
+            // Si Laravel nos devuelve nuestro error 400 (porque tiene historial)
+            if (error.response && error.response.status === 400) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Acción Denegada',
+                    text: error.response.data.message,
+                    confirmButtonColor: '#3b82f6'
+                });
+            } else {
+                Swal.fire('Error', 'Ocurrió un problema al intentar eliminar.', 'error');
+            }
         }
     }
 };

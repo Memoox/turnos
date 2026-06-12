@@ -90,6 +90,10 @@ class SuperadminUserController extends Controller
 
         try {
             $user = User::withTrashed()->findOrFail($id);
+
+            if ($request->rol_id != 3 || $user->getOriginal('sede_id') != $request->sede_id) {
+                $user->caja_id = null; // Le quitamos la ventanilla
+            }
             
             // Actualizamos datos básicos
             $user->name = $request->name;
@@ -131,6 +135,49 @@ class SuperadminUserController extends Controller
             }
 
             return response()->json(['status' => 'ok', 'message' => 'Estado del usuario actualizado'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function forceDelete($id)
+    {
+        try {
+            $user = User::withTrashed()->findOrFail($id);
+            // Protección máxima: El Superadmin principal nunca se puede borrar
+            if ($user->id == 1) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'El Superadministrador principal del sistema no puede ser eliminado.'
+                ], 403); // 403 Forbidden
+            }
+
+            $tieneTurnos = \App\Models\Turno::where('user_id', $id)->exists();
+
+            if ($tieneTurnos) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No se puede eliminar a este usuario porque ya tiene turnos atendidos. Solo puedes darlo de baja.'
+                ], 400);
+            }
+            
+
+            if ($user->rol_id == 2) {
+                $horasDesdeCreacion = $user->created_at->diffInHours(now());
+                
+                if ($horasDesdeCreacion > 48) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'El periodo de gracia expiró. Este Administrador tiene más de 48 horas en el sistema y, por motivos de auditoría, ya solo puede ser dado de baja.'
+                    ], 400);
+                }
+            }
+
+            // Destrucción total
+            $user->forceDelete();
+
+            return response()->json(['status' => 'ok', 'message' => 'Usuario eliminado permanentemente'], 200);
 
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);

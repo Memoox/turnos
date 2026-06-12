@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TipoTurno;
 use App\Models\Sede;
+use Illuminate\Validation\Rule;
 
 class SuperadminTipoTurnoController extends Controller
 {
@@ -47,7 +48,7 @@ class SuperadminTipoTurnoController extends Controller
     {
         $request->validate([
             'clave' => 'required|string|max:10|unique:tipo_turnos,clave',
-            'descripcion' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:255|unique:tipo_turnos,descripcion',
             'sedes' => 'array' // Validamos que manden un arreglo de sedes
         ]);
 
@@ -74,8 +75,18 @@ class SuperadminTipoTurnoController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'clave' => 'required|string|max:10|unique:tipo_turnos,clave,' . $id,
-            'descripcion' => 'required|string|max:255',
+            'clave' => [
+                'required', 
+                'string', 
+                'max:50', 
+                Rule::unique('tipo_turnos', 'clave')->ignore($id)
+            ],
+            'descripcion' => [
+                'required', 
+                'string', 
+                'max:255', 
+                Rule::unique('tipo_turnos', 'descripcion')->ignore($id)
+            ],
             'sedes' => 'array'
         ]);
 
@@ -112,6 +123,37 @@ class SuperadminTipoTurnoController extends Controller
             }
 
             return response()->json(['status' => 'ok', 'message' => 'Estado del trámite actualizado'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function forceDelete($id)
+    {
+        try {
+            $tramite = TipoTurno::withTrashed()->findOrFail($id); // O Tramite, según tu modelo
+
+            // 1. Validamos si ya existen turnos generados con este trámite
+            // (Asegúrate de que 'tipo_turno_id' sea el nombre correcto en tu tabla turnos)
+            $tieneTurnos = \App\Models\Turno::where('tipo_turno_id', $id)->exists();
+
+            if ($tieneTurnos) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No se puede eliminar este Trámite porque ya tiene turnos generados en el historial. Solo puedes darlo de baja.'
+                ], 400);
+            }
+
+            // 2. Limpiamos la tabla pivote para que no queden registros huérfanos de las sedes
+            \Illuminate\Support\Facades\DB::table('sede_tipo_turno')
+                ->where('tipo_turno_id', $id)
+                ->delete();
+
+            // 3. Destrucción total
+            $tramite->forceDelete();
+
+            return response()->json(['status' => 'ok', 'message' => 'Trámite eliminado permanentemente'], 200);
 
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);

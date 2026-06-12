@@ -113,4 +113,33 @@ class SuperadminSedeController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
+    // Eliminar definitivamente (Solo si no tiene historial)
+    public function forceDelete($id)
+    {
+        try {
+            $sede = Sede::withTrashed()->findOrFail($id);
+
+            // 1. Validamos si hay registros ligados a esta sede
+            // (Asegúrate de que los modelos User y Turno estén importados en el controlador)
+            $tieneUsuarios = \App\Models\User::where('sede_id', $id)->exists();
+            $tieneTurnos = \App\Models\Turno::where('sede_id', $id)->exists();
+
+            if ($tieneUsuarios || $tieneTurnos) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No se puede eliminar esta Sede porque ya tiene Usuarios o Turnos registrados. Por seguridad, solo puedes darla de baja.'
+                ], 400); // 400 Bad Request
+            }
+
+            // 2. Si está limpia, borramos sus relaciones en la tabla pivote y destruimos el registro
+            $sede->tiposTurno()->detach(); 
+            $sede->forceDelete();
+
+            return response()->json(['status' => 'ok', 'message' => 'Sede eliminada permanentemente'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }

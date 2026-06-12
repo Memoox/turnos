@@ -72,6 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/usuarios/{id}/toggle', [SuperadminUserController::class, 'toggleStatus']);
 
         Route::get('/dashboard', [SuperadminDashboardController::class, 'getMapaGlobal']);
+        Route::delete('/sedes/{id}/force', [SuperadminSedeController::class, 'forceDelete']);
+        Route::delete('/tramites/{id}/force', [SuperadminTipoTurnoController::class, 'forceDelete']);
+        Route::delete('/usuarios/{id}/force', [SuperadminUserController::class, 'forceDelete']);
     
     });
 });

@@ -102,7 +102,7 @@ const cargarMapa = async () => {
 onMounted(() => {
     cargarMapa();
     // Consultamos cada 10 segundos
-    intervaloMapa = setInterval(cargarMapa, 10000); 
+    intervaloMapa = setInterval(cargarMapa, 300000); 
 });
 
 onUnmounted(() => {

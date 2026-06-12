@@ -114,8 +114,11 @@
                         <button @click="editarUsuario(user)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
                         
                         <template v-if="user.id !== 1">
-                            <button v-if="user.is_active" @click="cambiarEstado(user.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">❌ Baja</button>
-                            <button v-else @click="cambiarEstado(user.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">✅ Reactivar</button>
+                            <button v-if="user.is_active" @click="cambiarEstado(user.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
+                            <button v-else @click="cambiarEstado(user.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
+                            <button v-if="user.id !== 1" @click="eliminarDefinitivo(user.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Usuario">
+                                🗑️
+                            </button>
                         </template>
                     </td>
                 </tr>
@@ -278,6 +281,34 @@ const cambiarEstado = async (id) => {
             Toast.fire({ icon: 'success', title: 'Acceso actualizado' });
         } catch (error) {
             Swal.fire('Error', error.response?.data?.message || "Ocurrió un error al intentar cambiar el estado.", 'error');
+        }
+    }
+};
+
+// En el <script setup>
+const eliminarDefinitivo = async (id) => {
+    const result = await Swal.fire({
+        title: '¿Destrucción Total?',
+        text: "La cuenta del usuario será eliminada permanentemente del sistema.",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Sí, destruir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await axios.delete(`/api/superadmin/usuarios/${id}/force`);
+            cargarUsuarios(paginaActual.value); 
+            Toast.fire({ icon: 'success', title: 'Usuario destruido exitosamente' });
+        } catch (error) {
+            if (error.response && (error.response.status === 400 || error.response.status === 403)) {
+                Swal.fire({ icon: 'warning', title: 'Acción Denegada', text: error.response.data.message, confirmButtonColor: '#3b82f6' });
+            } else {
+                Swal.fire('Error', 'Ocurrió un problema al intentar eliminar.', 'error');
+            }
         }
     }
 };
