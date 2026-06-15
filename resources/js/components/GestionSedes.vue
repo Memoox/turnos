@@ -5,12 +5,10 @@
             <h2 style="margin: 0; color: #1e293b;">🏢 Catálogo de Sedes</h2>
             
             <div style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
-                <input type="text" v-model="buscador" @keyup.enter="cargarSedes(1)" placeholder="🔍 Buscar por nombre..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
-                <button @click="cargarSedes(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">Buscar</button>
-                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">✖</button>
+                <input type="text" v-model="buscador" @input="buscarConPausa" placeholder="🔍 Buscar por nombre..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
             </div>
 
-            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">➕ Nueva Sede</button>
+            <button @click="abrirModalNuevo" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap;">+ Nueva Sede</button>
         </div>
 
         <div v-if="mostrarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
@@ -58,17 +56,17 @@
                         <span v-else style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Inactiva</span>
                     </td>
                     <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
-                        <button @click="editarSede(sede)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
+                        <button v-if="sede.is_active" @click="editarSede(sede)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
                             ✏️ Editar
                         </button>
                         
-                        <button v-if="sede.is_active" @click="cambiarEstado(sede.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
+                        <button v-if="sede.is_active" @click="cambiarEstado(sede)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
                             ❌ Baja
                         </button>
-                        <button v-else @click="cambiarEstado(sede.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
+                        <button v-else @click="cambiarEstado(sede)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">
                             ✅ Reactivar
                         </button>
-                        <button @click="eliminarDefinitivo(sede.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Sede">
+                        <button @click="eliminarDefinitivo(sede)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Sede">
                             🗑️
                         </button>
                     </td>
@@ -79,10 +77,13 @@
             </tbody>
         </table>
 
-        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
-            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> sedes registradas</span>
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px; margin-top: 10px;">
+    
+            <span style="color: #64748b; font-size: 14px;">
+                Total: <strong>{{ totalRegistros }}</strong> registros
+            </span>
             
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div v-if="ultimaPagina > 1" style="display: flex; gap: 8px; align-items: center;">
                 <button 
                     :disabled="paginaActual === 1" 
                     @click="cargarSedes(paginaActual - 1)" 
@@ -116,6 +117,8 @@ const sedes = ref([]);
 const mostrarModal = ref(false);
 const modoEdicion = ref(false);
 const formulario = ref({ id: null, nombre: '' });
+
+let timeoutBuscador = null;
 
 const Toast = Swal.mixin({
     toast: true,
@@ -215,36 +218,39 @@ const guardarSede = async () => {
 };
 
 // 4. Dar de baja / Reactivar (SoftDelete)
-const cambiarEstado = async (id) => {
-    // Le preguntamos al usuario antes de disparar al backend
+const cambiarEstado = async (sede) => {
+    const accion = sede.is_active ? 'dar de baja' : 'reactivar';
+    const textoAlerta = sede.is_active 
+        ? 'La Sede será desactivada.' 
+        : 'La Sede será reactivada.';
+    const colorBoton = sede.is_active ? '#ef4444' : '#10b981'; 
+    const estadoFinal = sede.is_active ? '¡Dada de Baja!' : '¡Reactivada!';
+    
     const result = await Swal.fire({
         title: '¿Estás seguro?',
-        text: "Cambiarás el estado operativo de esta Sede.",
+        text: textoAlerta,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#ef4444',
-        confirmButtonText: 'Sí, cambiar estado',
+        confirmButtonColor: colorBoton,
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: `Sí, ${accion}`,
         cancelButtonText: 'Cancelar'
     });
 
     // Si el usuario dijo que sí, ejecutamos el Axios
     if (result.isConfirmed) {
         try {
-            await axios.put(`/api/superadmin/sedes/${id}/toggle`);
-            cargarSedes(1); 
-            
-            Toast.fire({
-                icon: 'success',
-                title: 'Estado actualizado'
-            });
+            await axios.put(`/api/superadmin/sedes/${sede.id}/toggle`);
+            cargarSedes(paginaActual.value); 
+            Toast.fire({ icon: 'success', title: 'Estado actualizado' });
+            // Swal.fire(estadoFinal, 'El estado ha sido actualizado exitosamente.', 'success');
         } catch (error) {
             Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
         }
     }
 };
 
-const eliminarDefinitivo = async (id) => {
+const eliminarDefinitivo = async (sede) => {
     const result = await Swal.fire({
         title: '¿Destrucción Total?',
         text: "Esto borrará la sede de la base de datos permanentemente. Esta acción no se puede deshacer.",
@@ -258,7 +264,7 @@ const eliminarDefinitivo = async (id) => {
 
     if (result.isConfirmed) {
         try {
-            await axios.delete(`/api/superadmin/sedes/${id}/force`);
+            await axios.delete(`/api/superadmin/sedes/${sede.id}/force`);
             
             // Recargamos la tabla en la página actual
             cargarSedes(paginaActual.value); 
@@ -281,9 +287,16 @@ const eliminarDefinitivo = async (id) => {
     }
 };
 
-const limpiarBuscador = () => {
-    buscador.value = '';
-    cargarSedes(1);
+const buscarConPausa = () => {
+    // Si el usuario teclea rápido, cancelamos el temporizador anterior
+    if (timeoutBuscador) {
+        clearTimeout(timeoutBuscador);
+    }
+    
+    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
+    timeoutBuscador = setTimeout(() => {
+        cargarSedes(1);
+    }, 600); 
 };
 
 onMounted(() => {

@@ -13,7 +13,8 @@ class AdminCajeroController extends Controller
     // 1. LISTAR CAJEROS Y VENTANILLAS
     public function index(Request $request)
     {
-        $admin = $request->user();
+        // $admin = $request->user();
+        $admin = auth()->user();
         $search = $request->query('search');
 
         // Traemos solo a los usuarios que son de la misma sede y tienen rol de cajero
@@ -22,7 +23,21 @@ class AdminCajeroController extends Controller
             ->whereHas('rol', function ($query) {
                 $query->where('clave', 'cajero');
             })
-            ->get();
+            ->withTrashed() // Para que el Admin local pueda ver a los que dio de baja
+                ->when($search, function ($query, $search) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                    });
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        
+        // 2. Evaluamos si están activos o en la papelera
+        $cajeros->getCollection()->transform(function ($cajero) {
+            $cajero->is_active = !$cajero->trashed();
+            return $cajero;
+        });
 
         // Traemos las cajas (ventanillas) de esta sede para el <select> del formulario en Vue
         $cajas = Caja::where('sede_id', $admin->sede_id)->get();
@@ -96,20 +111,51 @@ class AdminCajeroController extends Controller
         ]);
     }
 
-    // 4. ELIMINAR CAJERO (Baja del sistema)
-    public function destroy(Request $request, $id)
-    {
-        $admin = $request->user();
-        $cajero = User::where('sede_id', $admin->sede_id)->findOrFail($id);
+    // // 4. ELIMINAR CAJERO (Baja del sistema)
+    // public function destroy(Request $request, $id)
+    // {
+    //     $admin = $request->user();
+    //     $cajero = User::where('sede_id', $admin->sede_id)->findOrFail($id);
         
-        $cajero->caja_id = null;
-        $cajero->save();
+    //     $cajero->caja_id = null;
+    //     $cajero->save();
         
-        $cajero->delete();
+    //     $cajero->delete();
 
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Cajero dado de baja'
-        ]);
+    //     return response()->json([
+    //         'status' => 'ok',
+    //         'message' => 'Cajero dado de baja'
+    //     ]);
+    // }
+
+    public function toggleEstado($id)
+    {
+        try {
+            $admin = auth()->user();
+            
+            // Buscamos al cajero, asegurándonos que pertenezca a la misma sede del admin
+            $cajero = User::where('sede_id', $admin->sede_id)
+                ->where('rol_id', 3)
+                ->withTrashed()
+                ->findOrFail($id);
+
+            // Si está en la papelera lo restauramos, si está activo lo borramos
+            if ($cajero->trashed()) {
+                $cajero->restore();
+                $mensaje = 'Cajero reactivado';
+            } else {
+                // Opcional: Le quitamos la ventanilla antes de mandarlo a la papelera
+                $cajero->caja_id = null;
+                $cajero->save();
+                
+                $cajero->delete();
+                $mensaje = 'Cajero dado de baja';
+            }
+
+            return response()->json(['status' => 'ok', 'message' => $mensaje], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 }

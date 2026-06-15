@@ -1,7 +1,7 @@
 <template>
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
         
-        <!-- ENCABEZADO Y BUSCADOR -->
+        
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
             <h2 style="margin: 0; color: #1e293b;">👥 Catálogo de Usuarios</h2>
             
@@ -9,20 +9,14 @@
                 <input 
                     type="text" 
                     v-model="buscador" 
-                    @keyup.enter="cargarUsuarios(1)"
+                    @input="buscarConPausa"
                     placeholder="🔍 Buscar por nombre o correo..." 
                     style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;"
-                >
-                <button @click="cargarUsuarios(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                    Buscar
-                </button>
-                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; title: Limpiar búsqueda;">
-                    ✖
-                </button>
+                >    
             </div>
 
             <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                ➕ Nuevo Usuario
+                + Nuevo Usuario
             </button>
         </div>
 
@@ -111,12 +105,12 @@
                         <span v-else style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Inactivo</span>
                     </td>
                     <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
-                        <button @click="editarUsuario(user)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
+                        <button v-if="user.is_active" @click="editarUsuario(user)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
                         
                         <template v-if="user.id !== 1">
-                            <button v-if="user.is_active" @click="cambiarEstado(user.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
-                            <button v-else @click="cambiarEstado(user.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
-                            <button v-if="user.id !== 1" @click="eliminarDefinitivo(user.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Usuario">
+                            <button v-if="user.is_active" @click="cambiarEstado(user)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
+                            <button v-else @click="cambiarEstado(user)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
+                            <button v-if="user.id !== 1" @click="eliminarDefinitivo(user)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Usuario">
                                 🗑️
                             </button>
                         </template>
@@ -125,10 +119,13 @@
             </tbody>
         </table>
 
-        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
-            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> usuarios registrados</span>
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px; margin-top: 10px;">
+    
+            <span style="color: #64748b; font-size: 14px;">
+                Total: <strong>{{ totalRegistros }}</strong> registros
+            </span>
             
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div v-if="ultimaPagina > 1" style="display: flex; gap: 8px; align-items: center;">
                 <button 
                     :disabled="paginaActual === 1" 
                     @click="cargarUsuarios(paginaActual - 1)" 
@@ -179,6 +176,8 @@ const ultimaPagina = ref(1);
 const totalRegistros = ref(0);
 
 const buscador = ref('');
+
+let timeoutBuscador = null;
 
 // 1. Cargar datos
 const cargarUsuarios = async (page = 1) => {
@@ -262,23 +261,31 @@ const guardarUsuario = async () => {
 };
 
 // 4. Baja Lógica
-const cambiarEstado = async (id) => {
+const cambiarEstado = async (user) => {
+    const accion = user.is_active ? 'dar de baja' : 'reactivar';
+    const textoAlerta = user.is_active 
+        ? 'El usuario será desactivado.' 
+        : 'El usuario será reactivado.';
+    const colorBoton = user.is_active ? '#ef4444' : '#10b981'; 
+    const estadoFinal = user.is_active ? '¡Dado de Baja!' : '¡Reactivado!';
+
     const result = await Swal.fire({
-        title: '¿Modificar acceso?',
-        text: "Deseas cambiar el estado del usuario en el sistema.",
+        title: '¿Estás seguro?',
+        text: textoAlerta,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#ef4444',
-        confirmButtonText: 'Sí, cambiar estado',
+        confirmButtonColor: colorBoton,
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: `Sí, ${accion}`,
         cancelButtonText: 'Cancelar'
     });
 
     if (result.isConfirmed) {
         try {
-            await axios.put(`/api/superadmin/usuarios/${id}/toggle`);
-            cargarUsuarios(); 
+            await axios.put(`/api/superadmin/usuarios/${user.id}/toggle`);
+            cargarUsuarios(paginaActual.value); 
             Toast.fire({ icon: 'success', title: 'Acceso actualizado' });
+            // Swal.fire(estadoFinal, 'El usuario ha sido actualizado exitosamente.', 'success');
         } catch (error) {
             Swal.fire('Error', error.response?.data?.message || "Ocurrió un error al intentar cambiar el estado.", 'error');
         }
@@ -286,7 +293,7 @@ const cambiarEstado = async (id) => {
 };
 
 // En el <script setup>
-const eliminarDefinitivo = async (id) => {
+const eliminarDefinitivo = async (user) => {
     const result = await Swal.fire({
         title: '¿Destrucción Total?',
         text: "La cuenta del usuario será eliminada permanentemente del sistema.",
@@ -300,7 +307,7 @@ const eliminarDefinitivo = async (id) => {
 
     if (result.isConfirmed) {
         try {
-            await axios.delete(`/api/superadmin/usuarios/${id}/force`);
+            await axios.delete(`/api/superadmin/usuarios/${user.id}/force`);
             cargarUsuarios(paginaActual.value); 
             Toast.fire({ icon: 'success', title: 'Usuario destruido exitosamente' });
         } catch (error) {
@@ -313,9 +320,16 @@ const eliminarDefinitivo = async (id) => {
     }
 };
 
-const limpiarBuscador = () => {
-    buscador.value = '';
-    cargarUsuarios(1);
+const buscarConPausa = () => {
+    // Si el usuario teclea rápido, cancelamos el temporizador anterior
+    if (timeoutBuscador) {
+        clearTimeout(timeoutBuscador);
+    }
+    
+    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
+    timeoutBuscador = setTimeout(() => {
+        cargarUsuarios(1);
+    }, 600); 
 };
 
 onMounted(() => {

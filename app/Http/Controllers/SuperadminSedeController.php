@@ -142,4 +142,12 @@ class SuperadminSedeController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
+    // En SedeController.php
+    public function listaDesplegable()
+    {
+        // Traemos solo ID y Nombre de las sedes activas, sin paginar
+        $sedes = Sede::select('id', 'nombre')->get(); 
+        return response()->json(['status' => 'ok', 'sedes' => $sedes]);
+    }
 }

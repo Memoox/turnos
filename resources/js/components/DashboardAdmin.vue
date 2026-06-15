@@ -7,7 +7,7 @@
                 <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Supervisión en tiempo real de filas y ventanillas.</p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; background: #ecfdf5; padding: 8px 15px; border-radius: 20px; border: 1px solid #a7f3d0;">
-                <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulse 2s infinite;"></span>
+                <span class="punto-palpitante" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></span>
                 <span style="color: #065f46; font-size: 13px; font-weight: bold;">Conectado</span>
             </div>
         </div>
@@ -131,6 +131,10 @@ defineExpose({
 </script>
 
 <style scoped>
+.punto-palpitante {
+    animation: pulse 2s infinite;
+}
+
 @keyframes pulse {
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }

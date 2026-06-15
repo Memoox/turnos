@@ -10,8 +10,9 @@
 
         <div v-else>
             <div style="text-align: center; margin-bottom: 40px;">
-                <h1>📺 Pantalla de Sala de Espera</h1>
-                <h2 style="color: gray;">Identificador de Sede: {{ sedeId }}</h2>
+                <!-- <h1 style="margin-bottom: 5px;">📺 Pantalla de Sala de Espera</h1> -->
+                <h1 style="margin-bottom: 5px;">📺 BIENVENIDO</h1>
+                <h2 style="color: #6b7280; margin-top: 0;">📍 {{ sedeNombre || 'Cargando información...' }}</h2>
             </div>
             
             <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-start;">
@@ -54,16 +55,17 @@ import axios from 'axios';
 const route = useRoute();
 const sedeId = route.params.sede_id; 
 
-const iniciado = ref(false); // Bandera para mostrar el botón inicial
+const iniciado = ref(false); 
 const turnoActual = ref(null);
 const cajaAsignada = ref(null);
 const historialTurnos = ref([]);
 
-// 1. DESBLOQUEAR EL AUDIO
+// 🔥 Nueva variable para guardar el nombre
+const sedeNombre = ref(''); 
+
 const iniciarPantalla = () => {
     iniciado.value = true;
     
-    // Truco: Hablamos algo en volumen cero para que el navegador nos dé permiso permanente
     let msg = new SpeechSynthesisUtterance("Listo");
     msg.volume = 0; 
     window.speechSynthesis.speak(msg);
@@ -73,34 +75,33 @@ const iniciarPantalla = () => {
     audioSilencioso.play().catch(e => console.log("Audio en pausa hasta interacción"));
 };
 
-// 2. FUNCIÓN PARA GENERAR LA VOZ
 const anunciarVoz = (turnoTexto, ventanillaTexto) => {
-    // Si la API del navegador está leyendo algo más, la cancelamos para que diga esto de inmediato
     window.speechSynthesis.cancel(); 
 
-    // Reemplazamos el guion por un espacio para que diga "D cero cero uno" en lugar de "D guion..."
     const turnoLimpio = turnoTexto.replace('-', ' '); 
     const textoALeer = `Turno ${turnoLimpio}, pasar a ${ventanillaTexto}`;
 
     let mensaje = new SpeechSynthesisUtterance(textoALeer);
-    mensaje.lang = 'es-MX'; // Español de México
-    mensaje.rate = 0.85;    // Velocidad un poco más pausada para que se entienda claro
-    mensaje.pitch = 1;      // Tono normal
+    mensaje.lang = 'es-MX'; 
+    mensaje.rate = 0.85;    
+    mensaje.pitch = 1;      
 
     window.speechSynthesis.speak(mensaje);
 };
 
 const reproducirTimbre = () => {
-    // Busca el archivo directamente en la carpeta public de Laravel
     const audio = new Audio('/header.mp3'); 
     audio.play().catch(error => console.error("Error al reproducir el timbre:", error));
 };
 
-// 3. CARGA DEL HISTORIAL
 const consultarEstadoInicial = async () => {
     try {
         const response = await axios.get(`/api/turnos/pantalla/${sedeId}`);
         if (response.data.status === 'ok') {
+            
+            // 🔥 Atrapamos el nombre de la sede desde el backend
+            sedeNombre.value = response.data.sede_nombre;
+
             historialTurnos.value = response.data.turnos;
             const ultimoLlamado = response.data.turnos.find(t => t.turno !== '--');
             if (ultimoLlamado) {
@@ -108,6 +109,7 @@ const consultarEstadoInicial = async () => {
                 cajaAsignada.value = ultimoLlamado.caja;
             }
         } else if (response.data.status === 'no-data') {
+            sedeNombre.value = response.data.sede_nombre; // Lo atrapamos también si no hay turnos
             historialTurnos.value = response.data.turnos;
         }
     } catch (error) {
@@ -122,17 +124,10 @@ onMounted(() => {
         .listen('TurnoLlamado', (e) => {
             console.log('🔥 ¡Nuevo turno recibido en tiempo real!', e);
             
-            // Actualizamos la pantalla (Usamos e.turno y e.caja porque así los definiste en tu Event de Laravel)
             turnoActual.value = e.turno;
             cajaAsignada.value = e.caja;
             
-            // Disparamos la voz robótica
-            // anunciarVoz(e.turno, e.caja);
-
             reproducirTimbre();
-
-            // reproducirTimbre();
-            // setTimeout(() => anunciarVoz(e.turno, e.caja), 1500); // Espera 1.5 seg a que suene el timbre
             
             historialTurnos.value.unshift({ turno: e.turno, caja: e.caja });
             if (historialTurnos.value.length > 10) {
@@ -141,7 +136,6 @@ onMounted(() => {
         });
 });
 
-// Limpieza del canal al cerrar la ventana
 onUnmounted(() => {
     window.Echo.leave(`sede.${sedeId}.pantalla`);
 });

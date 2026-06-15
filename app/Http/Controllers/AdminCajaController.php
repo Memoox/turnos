@@ -12,33 +12,49 @@ class AdminCajaController extends Controller
     // 1. LISTAR VENTANILLAS DE LA SEDE
     public function index(Request $request)
     {
-        $admin = $request->user();
+        try {
+            $admin = auth()->user();
+            $search = $request->query('search');
 
-        $cajas = Caja::with('tiposDeTurno')
-            ->where('sede_id', $admin->sede_id)
-            ->get();
+            $cajas = Caja::with('tiposDeTurno')
+                ->where('sede_id', $admin->sede_id)
+                ->withTrashed()
+                ->when($search, function ($query, $search) {
+                    $query->where('nombre', 'like', "%{$search}%");
+                })
+                ->orderBy('id', 'desc')
+                ->paginate(10);
 
-        $tiposTurnos = TipoTurno::all();
+            // Evaluamos si están activas o en la papelera
+            $cajas->getCollection()->transform(function ($caja) {
+                $caja->is_active = !$caja->trashed();
+                return $caja;
+            });
 
-        return response()->json([
-            'status' => 'ok',
-            'cajas' => $cajas,
-            'tipo_turnos' => $tiposTurnos
-        ]);
+            $tiposTurnos = TipoTurno::all();
+
+            return response()->json([
+                'status' => 'ok',
+                'cajas' => $cajas,
+                'tipo_turnos' => $tiposTurnos
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     // 2. CREAR NUEVA VENTANILLA
     public function store(Request $request)
     {
-        $admin = $request->user();
+        $admin = auth()->user();
 
         $request->validate([
             'nombre' => [
-                'required',
-                'string',
-                'max:255',
+                'required', 'string', 'max:255',
                 Rule::unique('cajas')->where(function ($query) use ($admin) {
-                    return $query->where('sede_id', $admin->sede_id);
+                    // Validamos que sea único en esa sede y que no esté en la papelera
+                    return $query->where('sede_id', $admin->sede_id)->whereNull('deleted_at');
                 })
             ],
             'tipo_turnos' => 'array', 
@@ -47,7 +63,7 @@ class AdminCajaController extends Controller
 
         $nuevaCaja = Caja::create([
             'nombre' => $request->nombre,
-            'sede_id' => $admin->sede_id, // Candado de seguridad
+            'sede_id' => $admin->sede_id,
         ]);
 
         if ($request->has('tipo_turnos')) {
@@ -64,18 +80,14 @@ class AdminCajaController extends Controller
     // 3. ACTUALIZAR NOMBRE DE VENTANILLA
     public function update(Request $request, $id)
     {
-        $admin = $request->user();
-        
-        // El findOrFail con where asegura que no pueda editar cajas de otras sedes
+        $admin = auth()->user();
         $caja = Caja::where('sede_id', $admin->sede_id)->findOrFail($id);
 
         $request->validate([
           'nombre' => [
-                'required',
-                'string',
-                'max:255',
+                'required', 'string', 'max:255',
                 Rule::unique('cajas')->where(function ($query) use ($admin) {
-                    return $query->where('sede_id', $admin->sede_id);
+                    return $query->where('sede_id', $admin->sede_id)->whereNull('deleted_at');
                 })->ignore($id)
             ],
             'tipo_turnos' => 'array', 
@@ -97,16 +109,29 @@ class AdminCajaController extends Controller
     }
 
     // 4. ELIMINAR VENTANILLA
-    public function destroy(Request $request, $id)
+    public function toggleEstado($id)
     {
-        $admin = $request->user();
-        $caja = Caja::where('sede_id', $admin->sede_id)->findOrFail($id);
-        
-        $caja->delete();
+        try {
+            $admin = auth()->user();
+            $caja = Caja::where('sede_id', $admin->sede_id)
+                ->withTrashed()
+                ->findOrFail($id);
 
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Ventanilla eliminada'
-        ]);
+            if ($caja->trashed()) {
+                $caja->restore();
+                $mensaje = 'Ventanilla reactivada';
+            } else {
+                // Si la damos de baja, le quitamos la ventanilla a los cajeros que la tenían asignada
+                \App\Models\User::where('caja_id', $caja->id)->update(['caja_id' => null]);
+                
+                $caja->delete();
+                $mensaje = 'Ventanilla dada de baja';
+            }
+
+            return response()->json(['status' => 'ok', 'message' => $mensaje], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 }

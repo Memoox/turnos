@@ -10,6 +10,7 @@ use App\Http\Controllers\SuperadminSedeController;
 use App\Http\Controllers\SuperadminTipoTurnoController;
 use App\Http\Controllers\SuperadminUserController;
 use App\Http\Controllers\SuperadminDashboardController;
+use App\Http\Controllers\ReporteController;
 
 // --- RUTAS PÚBLICAS ---
 // Autenticación
@@ -43,12 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/cajeros', [AdminCajeroController::class, 'store']);
     Route::put('/admin/cajeros/{id}', [AdminCajeroController::class, 'update']);
     Route::delete('/admin/cajeros/{id}', [AdminCajeroController::class, 'destroy']);
+    Route::patch('/admin/cajeros/{id}/toggle', [AdminCajeroController::class, 'toggleEstado']);
 
     // RUTAS PARA LA GESTIÓN DE VENTANILLAS (Panel Admin)
     Route::get('/admin/cajas', [AdminCajaController::class, 'index']);
     Route::post('/admin/cajas', [AdminCajaController::class, 'store']);
     Route::put('/admin/cajas/{id}', [AdminCajaController::class, 'update']);
     Route::delete('/admin/cajas/{id}', [AdminCajaController::class, 'destroy']);
+    Route::patch('/admin/cajas/{id}/toggle', [AdminCajaController::class, 'toggleEstado']);
+
+    Route::get('/reportes/descargar', [ReporteController::class, 'descargarReporteExcel']);
 
     // RUTAS DEL SÚPER ADMINISTRADOR
     Route::prefix('superadmin')->group(function () {
@@ -75,6 +80,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/sedes/{id}/force', [SuperadminSedeController::class, 'forceDelete']);
         Route::delete('/tramites/{id}/force', [SuperadminTipoTurnoController::class, 'forceDelete']);
         Route::delete('/usuarios/{id}/force', [SuperadminUserController::class, 'forceDelete']);
+
+        Route::get('/sedes-lista', [SuperadminSedeController::class, 'listaDesplegable']);
     
     });
 });

@@ -5,12 +5,10 @@
             <h2 style="margin: 0; color: #1e293b;">📄 Catálogo de Trámites</h2>
             
             <div style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
-                <input type="text" v-model="buscador" @keyup.enter="cargarTramites(1)" placeholder="🔍 Buscar por clave o descripción..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
-                <button @click="cargarTramites(1)" style="background: #334155; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">Buscar</button>
-                <button v-if="buscador" @click="limpiarBuscador" style="background: #ef4444; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">✖</button>
+                <input type="text" v-model="buscador" @input="buscarConPausa" placeholder="🔍 Buscar por clave o descripción..." style="flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none;">
             </div>
 
-            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">➕ Nuevo Trámite</button>
+            <button @click="abrirModalNuevo" style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Nuevo Trámite</button>
         </div>
 
         <div v-if="mostrarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
@@ -80,10 +78,10 @@
                         <span v-else style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 6px 12px; border-radius: 20px; font-size: 12px;">Inactivo</span>
                     </td>
                     <td style="padding: 15px; text-align: right; white-space: nowrap; width: 1%;">
-                        <button @click="editarTramite(tramite)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
-                        <button v-if="tramite.is_active" @click="cambiarEstado(tramite.id)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
-                        <button v-else @click="cambiarEstado(tramite.id)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
-                        <button @click="eliminarDefinitivo(tramite.id)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Sede">
+                        <button v-if="tramite.is_active" @click="editarTramite(tramite)" style="background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✏️ Editar</button>
+                        <button v-if="tramite.is_active" @click="cambiarEstado(tramite)" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">❌ Baja</button>
+                        <button v-else @click="cambiarEstado(tramite)" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-weight: bold;">✅ Reactivar</button>
+                        <button @click="eliminarDefinitivo(tramite)" style="background: #7f1d1d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;" title="Destruir Tramite">
                             🗑️
                         </button>
                     </td>
@@ -94,10 +92,13 @@
             </tbody>
         </table>
 
-        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px;">
-            <span style="color: #64748b; font-size: 14px;">Total: <strong>{{ totalRegistros }}</strong> trámites registrados</span>
+        <div v-if="totalRegistros > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 12px 12px; margin-top: 10px;">
+    
+            <span style="color: #64748b; font-size: 14px;">
+                Total: <strong>{{ totalRegistros }}</strong> registros
+            </span>
             
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div v-if="ultimaPagina > 1" style="display: flex; gap: 8px; align-items: center;">
                 <button 
                     :disabled="paginaActual === 1" 
                     @click="cargarTramites(paginaActual - 1)" 
@@ -145,6 +146,8 @@ const buscador = ref('');
 const paginaActual = ref(1);
 const ultimaPagina = ref(1);
 const totalRegistros = ref(0);
+
+let timeoutBuscador = null;
 
 // El formulario ahora incluye un arreglo de 'sedes'
 const formulario = ref({ id: null, clave: '', descripcion: '', sedes: [] });
@@ -225,22 +228,29 @@ const guardarTramite = async () => {
 };
 
 // 4. SoftDelete
-const cambiarEstado = async (id) => {
+const cambiarEstado = async (tramite) => {
+    const accion = tramite.is_active ? 'dar de baja' : 'reactivar';
+    const textoAlerta = tramite.is_active 
+        ? 'El Tramite será desactivado.' 
+        : 'El Tramite será reactivado.';
+    const colorBoton = tramite.is_active ? '#ef4444' : '#10b981'; 
+    const estadoFinal = tramite.is_active ? '¡Dado de Baja!' : '¡Reactivado!';
+
     const result = await Swal.fire({
         title: '¿Estás seguro?',
-        text: "Cambiarás el estado operativo de este trámite",
+        text: textoAlerta,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#ef4444',
-        confirmButtonText: 'Sí, continuar',
+        confirmButtonColor: colorBoton,
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: `Sí, ${accion}`,
         cancelButtonText: 'Cancelar'
     });
 
     if (result.isConfirmed) {
         try {
-            await axios.put(`/api/superadmin/tramites/${id}/toggle`);
-            cargarTramites(1); 
+            await axios.put(`/api/superadmin/tramites/${tramite.id}/toggle`);
+            cargarTramites(paginaActual.value); 
             Toast.fire({ icon: 'success', title: 'Estado actualizado' });
         } catch (error) {
             Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
@@ -248,12 +258,7 @@ const cambiarEstado = async (id) => {
     }
 };
 
-const limpiarBuscador = () => {
-    buscador.value = '';
-    cargarTramites(1);
-};
-
-const eliminarDefinitivo = async (id) => {
+const eliminarDefinitivo = async (tramite) => {
     const result = await Swal.fire({
         title: '¿Destrucción Total?',
         text: "Esto borrará el trámite permanentemente. Esta acción no se puede deshacer.",
@@ -267,7 +272,7 @@ const eliminarDefinitivo = async (id) => {
 
     if (result.isConfirmed) {
         try {
-            await axios.delete(`/api/superadmin/tramites/${id}/force`);
+            await axios.delete(`/api/superadmin/tramites/${tramite.id}/force`);
             cargarTramites(paginaActual.value); 
             Toast.fire({ icon: 'success', title: 'Trámite destruido exitosamente' });
         } catch (error) {
@@ -278,6 +283,18 @@ const eliminarDefinitivo = async (id) => {
             }
         }
     }
+};
+
+const buscarConPausa = () => {
+    // Si el usuario teclea rápido, cancelamos el temporizador anterior
+    if (timeoutBuscador) {
+        clearTimeout(timeoutBuscador);
+    }
+    
+    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
+    timeoutBuscador = setTimeout(() => {
+        cargarTramites(1);
+    }, 600); 
 };
 
 onMounted(() => {

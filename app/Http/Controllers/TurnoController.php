@@ -232,6 +232,7 @@ class TurnoController extends Controller
     public function turnosPantalla($sede_id)
     {
         try {
+            $sede = \App\Models\Sede::findOrFail($sede_id);
             // 1. Eager Loading para traer la caja en la misma consulta
             $turnos = Turno::with('caja') 
                 ->where('sede_id', $sede_id)
@@ -251,6 +252,7 @@ class TurnoController extends Controller
 
             return response()->json([
                 "status"  => $turnos->isEmpty() ? "no-data" : "ok",
+                'sede_nombre' => $sede->nombre,
                 "turnos"  => $turnosPadded
             ], 200);
 

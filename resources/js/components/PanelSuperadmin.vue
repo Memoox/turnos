@@ -1,5 +1,5 @@
 <template>
-    <div style="font-family: sans-serif; max-width: 1300px; margin: 40px auto; padding: 20px;">
+    <div style="font-family: sans-serif; max-width: 1300px; margin: 10px auto; padding: 20px;">
 
         <h1 style="color: #0f172a; margin-bottom: 20px;">👑 Panel de Súper Administrador</h1>
 
@@ -8,6 +8,7 @@
             <button @click="pestanaActual = 'sedes'" :style="btnStyle(pestanaActual === 'sedes')">🏢 Sedes</button>
             <button @click="pestanaActual = 'tramites'" :style="btnStyle(pestanaActual === 'tramites')">📑 Trámites</button>
             <button @click="pestanaActual = 'usuarios'" :style="btnStyle(pestanaActual === 'usuarios')">👥 Usuarios</button>
+            <button @click="pestanaActual = 'reportes'" :style="btnStyle(pestanaActual === 'reportes')">📊 Reportes</button>
         </div>
 
         <div v-if="pestanaActual === 'mapa'">
@@ -24,7 +25,16 @@
                 <div v-for="sede in sedesData" :key="sede.id" style="background: white; border: 1px solid #cbd5e1; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
                         <h3 style="margin: 0; color: #0f172a; font-size: 18px;">{{ sede.nombre }}</h3>
-                        <span style="font-size: 12px; color: #16a34a; font-weight: bold; background: #dcfce7; padding: 4px 8px; border-radius: 10px;">Activa</span>
+                        <span :style="{
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            padding: '4px 8px',
+                            borderRadius: '10px',
+                            color: sede.is_active ? '#16a34a' : '#dc2626',
+                            background: sede.is_active ? '#dcfce7' : '#fee2e2'
+                        }">
+                            {{ sede.is_active ? 'Activa' : 'Inactiva' }}
+                        </span>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
@@ -61,16 +71,20 @@
         <div v-if="pestanaActual === 'usuarios'">
             <GestionAdministradores />
         </div>
+        <div v-if="pestanaActual === 'reportes'">
+            <GestionReportes />
+        </div>
 
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import axios from 'axios';
-import GestionSedes from './GestionSedes.vue'; // Asegúrate de haber creado este archivo
+import GestionSedes from './GestionSedes.vue';
 import GestionTramites from './GestionTramites.vue';
 import GestionAdministradores from './GestionAdministradores.vue';
+import GestionReportes from './GestionReportes.vue';
 
 const pestanaActual = ref('mapa'); // Empezamos en la pestaña de sedes para probar
 const sedesData = ref([]); 
@@ -99,10 +113,16 @@ const cargarMapa = async () => {
     }
 };
 
+watch(pestanaActual, (nuevaPestana) => {
+    if (nuevaPestana === 'mapa') {
+        cargarMapa(); // Si el usuario regresa al mapa, recargamos los datos al instante
+    }
+});
+
 onMounted(() => {
     cargarMapa();
     // Consultamos cada 10 segundos
-    intervaloMapa = setInterval(cargarMapa, 300000); 
+    intervaloMapa = setInterval(cargarMapa, 150000); 
 });
 
 onUnmounted(() => {
