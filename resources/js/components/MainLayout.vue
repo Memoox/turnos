@@ -28,6 +28,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const rolUsuario = ref('');
@@ -38,12 +39,24 @@ onMounted(() => {
 });
 
 const cerrarSesion = async () => {
+
+    Swal.fire({
+        title: 'Cerrando sesión...',
+        text: 'Por favor espera un momento.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading(); // Pone el circulito girando
+        }
+    });
+
     try {
         await axios.post('/api/logout');
     } catch (error) {
         console.error("Error al cerrar sesión", error);
     } finally {
         localStorage.removeItem('user_rol');
+        Swal.close();
         router.push('/login');
     }
 };

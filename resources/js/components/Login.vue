@@ -31,8 +31,15 @@
 
             <button type="submit" 
                     :disabled="loading"
-                    style="width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
-                {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión 🚀' }}
+                    :style="{ opacity: loading ? '0.7' : '1', cursor: loading ? 'not-allowed' : 'pointer' }"
+                    style="width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(37,99,235,0.2); display: flex; justify-content: center; align-items: center; gap: 10px; transition: all 0.3s ease;">
+                
+                <svg v-if="loading" class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+
+                <span>{{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión 🚀' }}</span>
             </button>
         </form>
     </div>
@@ -55,7 +62,6 @@ const handleLogin = async () => {
     errorMessage.value = '';
 
     try {
-
         await axios.get('/sanctum/csrf-cookie');
 
         const response = await axios.post('/api/login', {
@@ -65,12 +71,10 @@ const handleLogin = async () => {
 
         if (response.data.status === 'ok') {
             const user = response.data.user;
-
             const claveRol = user.rol.clave;
-           
+            
             localStorage.setItem('user_rol', claveRol);
 
-            //Redirección inteligente
             switch (claveRol) {
                 case 'superadmin':
                     await router.push('/superadmin');
@@ -93,3 +97,18 @@ const handleLogin = async () => {
     }
 };
 </script>
+
+<style scoped>
+/* Animación para que el spinner gire */
+.spinner {
+    height: 20px;
+    width: 20px;
+    color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>

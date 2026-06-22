@@ -103,15 +103,6 @@ const conectarWebSocket = (sedeId) => {
         });
 };
 
-const cerrarSesion = async () => {
-    if (sedeIdActual.value) {
-        window.Echo.leave(`sede.${sedeIdActual.value}.pendientes`);
-        window.Echo.leave(`sede.${sedeIdActual.value}.pantalla`);
-    }
-    await axios.post('/api/logout');
-    localStorage.removeItem('user_rol');
-    router.push('/login');
-};
 
 onMounted(() => {
     obtenerSede();
