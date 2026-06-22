@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('clave', 10); // Ej: 'T', 'S', 'A' (Para armar T0001)
             $table->string('descripcion'); // Ej: 'Demanda Nueva', 'Escritos'
-            $table->boolean('status')->default(true);
+            $table->string('icono', 10)->nullable();
+            // $table->boolean('status')->default(true);
             $table->softDeletes();
             $table->timestamps();
         });

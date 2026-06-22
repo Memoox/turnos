@@ -47,14 +47,16 @@ class SuperadminTipoTurnoController extends Controller
         $request->validate([
             'clave' => 'required|string|max:10|unique:tipo_turnos,clave',
             'descripcion' => 'required|string|max:255|unique:tipo_turnos,descripcion',
-            'sedes' => 'array' // Validamos que manden un arreglo de sedes
+            'sedes' => 'array', // Validamos que manden un arreglo de sedes
+            'icono' => 'nullable|string|max:10', 
         ]);
 
         try {
             $tramite = TipoTurno::create([
                 'clave' => strtoupper($request->clave),
                 'descripcion' => $request->descripcion,
-                'status' => 1 // Llenamos tu columna status manual por si no tiene default
+                'icono' => $request->icono,
+                
             ]);
 
             // MAGIA: Sincronizamos la tabla pivote (sede_tipo_turno)
@@ -85,7 +87,8 @@ class SuperadminTipoTurnoController extends Controller
                 'max:255', 
                 Rule::unique('tipo_turnos', 'descripcion')->ignore($id)
             ],
-            'sedes' => 'array'
+            'sedes' => 'array',
+            'icono' => 'nullable|string|max:10',
         ]);
 
         try {
@@ -93,7 +96,8 @@ class SuperadminTipoTurnoController extends Controller
             
             $tramite->update([
                 'clave' => strtoupper($request->clave),
-                'descripcion' => $request->descripcion
+                'descripcion' => $request->descripcion,
+                'icono' => $request->icono,
             ]);
 
             // Actualizamos la tabla pivote automáticamente

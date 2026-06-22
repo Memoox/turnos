@@ -14,9 +14,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. LIMPIEZA DE CATÁLOGOS: Tipos de Turno
-        $tipoD = TipoTurno::create(['clave' => 'D', 'descripcion' => 'Demanda Nueva', 'status' => true]);
-        $tipoE = TipoTurno::create(['clave' => 'E', 'descripcion' => 'Escritos', 'status' => true]);
-        $tipoI = TipoTurno::create(['clave' => 'I', 'descripcion' => 'Información', 'status' => true]);
+        $tipoD = TipoTurno::create(['clave' => 'D', 'descripcion' => 'Demanda Nueva']);
+        $tipoE = TipoTurno::create(['clave' => 'E', 'descripcion' => 'Escritos']);
+        $tipoI = TipoTurno::create(['clave' => 'I', 'descripcion' => 'Información']);
 
         $rolSuper = \App\Models\Rol::create(['clave' => 'superadmin', 'nombre' => 'Super Administrador']);
         $rolAdmin = \App\Models\Rol::create(['clave' => 'admin', 'nombre' => 'Administrador Local']);
@@ -30,10 +30,10 @@ class DatabaseSeeder extends Seeder
         $sedeCholula->tiposTurno()->attach([3]);
 
         // 3. CREACIÓN DE CAJAS / VENTANILLAS (Para Sede Puebla)
-        $caja1 = Caja::create(['sede_id' => $sedePuebla->id, 'nombre' => 'Ventanilla 1', 'status' => 1]);
+        $caja1 = Caja::create(['sede_id' => $sedePuebla->id, 'nombre' => 'Ventanilla 1']);
         $caja1->tiposDeTurno()->attach([$tipoD->id, $tipoE->id, $tipoI->id]); // Atiende todo
 
-        $caja2 = Caja::create(['sede_id' => $sedePuebla->id, 'nombre' => 'Ventanilla 2', 'status' => 1]);
+        $caja2 = Caja::create(['sede_id' => $sedePuebla->id, 'nombre' => 'Ventanilla 2']);
         $caja2->tiposDeTurno()->attach([$tipoI->id]); // Solo Información
 
         // 4. SIEMBRA DE USUARIOS (Tus 3 Niveles de Roles)

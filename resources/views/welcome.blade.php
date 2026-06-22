@@ -6,7 +6,7 @@
     <title>Sistema de Turnos</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100" style="background-color: #f1f5f9; margin: 0; font-family: sans-serif;">
     <div id="app">
         <router-view></router-view>
     </div>

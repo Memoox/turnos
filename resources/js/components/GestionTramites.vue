@@ -28,6 +28,23 @@
                         <input type="text" v-model="formulario.descripcion" placeholder="Ej. Demanda Nueva" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px;">
                     </div>
                 </div>
+                <div style="margin-top: 20px; text-align: left;">
+                    <label style="display: block; margin-top: 8px; color: #374151; font-weight: bold; font-size: 16px;">Ícono (Emoji):</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" 
+                            v-model="formulario.icono" 
+                            placeholder="Ej: ⚖️, 📄, 🚨" 
+                            maxlength="5"
+                            style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px;">
+                        
+                        <div style="font-size: 28px; width: 40px; text-align: center;">
+                            {{ formulario.icono || '🔸' }}
+                        </div>
+                    </div>
+                    <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 12px;">
+                        💡 Tip: Puedes presionar <strong>Windows + .</strong> (punto) en tu teclado para abrir el panel de emojis.
+                    </p>
+                </div>
 
                 <div style="margin-top: 20px; margin-bottom: 25px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #334155;">🏢 ¿En qué Sedes estará disponible?</label>
@@ -149,7 +166,7 @@ const totalRegistros = ref(0);
 
 let timeoutBuscador = null;
 
-const formulario = ref({ id: null, clave: '', descripcion: '', sedes: [] });
+const formulario = ref({ id: null, clave: '', descripcion: '', icono: '', sedes: [] });
 
 const cargarTramites = async (page = 1) => {
     try {
@@ -165,7 +182,7 @@ const cargarTramites = async (page = 1) => {
 };
 
 const abrirModalNuevo = () => {
-    formulario.value = { id: null, clave: '', descripcion: '', sedes: [] };
+    formulario.value = { id: null, clave: '', descripcion: '', icono: '', sedes: [] };
     modoEdicion.value = false;
     mostrarModal.value = true;
 };
@@ -177,7 +194,8 @@ const editarTramite = (tramite) => {
         id: tramite.id, 
         clave: tramite.clave, 
         descripcion: tramite.descripcion, 
-        sedes: sedesAsignadas 
+        sedes: sedesAsignadas,
+        icono: tramite.icono 
     };
     modoEdicion.value = true;
     mostrarModal.value = true;
