@@ -2,22 +2,21 @@
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 800px; margin: 0 auto;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px;">
-            <h2 style="margin: 0; color: #1e293b;">📊 Reportes y Estadísticas</h2>
-            <span style="color: #64748b; font-size: 14px;">Módulo de exportación Excel/PDF</span>
+            <div>
+                <h2 style="margin: 0; color: #1e293b;">📊 Reportes de mi Sede</h2>
+                <p style="margin: 5px 0 0 0; color: #3b82f6; font-weight: bold;">
+                    📍 {{ miSedeNombre || 'Cargando información...' }}
+                </p>
+            </div>
+            <span style="color: #64748b; font-size: 14px;">Módulo de exportación</span>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            
-            <div>
-                <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">1. Selecciona la Sede:</label>
-                <select v-model="form.sede_id" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; background-color: #f8fafc;">
-                    <option value="" disabled>-- Elige una sede --</option>
-                    <option v-for="sede in sedes" :key="sede.id" :value="sede.id">
-                        {{ sede.nombre }}
-                    </option>
-                </select>
-            </div>
+        <div v-if="cargandoSede" style="text-align: center; color: #64748b; padding: 20px;">
+            ⏳ Verificando permisos de sede...
+        </div>
 
+        <div v-else style="display: flex; flex-direction: column; gap: 20px;">
+            
             <div>
                 <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">Filtros rápidos:</label>
                 <div style="display: flex; gap: 10px;">
@@ -35,28 +34,22 @@
 
             <div style="display: flex; gap: 20px;">
                 <div style="flex: 1;">
-                    <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">2. Fecha de Inicio:</label>
+                    <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">Fecha de Inicio:</label>
                     <input type="date" v-model="form.fecha_inicio" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; background-color: #f8fafc;">
                 </div>
                 
                 <div style="flex: 1;">
-                    <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">3. Fecha de Fin:</label>
+                    <label style="font-weight: bold; color: #475569; display: block; margin-bottom: 8px;">Fecha de Fin:</label>
                     <input type="date" v-model="form.fecha_fin" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; background-color: #f8fafc;">
                 </div>
-            </div>
-
-            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; margin-top: 10px;">
-                <p style="margin: 0; color: #1e3a8a; font-size: 14px;">
-                    💡 <strong>Nota:</strong> El reporte incluirá los promedios de tiempos de atención y la estadística de usuarios atendidos por hora según la Sede seleccionada.
-                </p>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
                 <button 
                     @click="descargarReporte('excel')" 
-                    :disabled="!form.sede_id || descargando"
+                    :disabled="descargando || !miSedeId"
                     style="padding: 15px 25px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s;"
-                    :style="{ backgroundColor: (!form.sede_id || descargando) ? '#94a3b8' : '#10b981' }"
+                    :style="{ backgroundColor: (descargando || !miSedeId) ? '#94a3b8' : '#10b981' }"
                 >
                     <span v-if="descargando">⏳ Generando...</span>
                     <span v-else>📊 Descargar Excel</span>
@@ -64,25 +57,14 @@
 
                 <button 
                     @click="descargarReporte('pdf')" 
-                    :disabled="!form.sede_id || descargando"
+                    :disabled="descargando || !miSedeId"
                     style="padding: 15px 25px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s;"
-                    :style="{ backgroundColor: (!form.sede_id || descargando) ? '#94a3b8' : '#ef4444' }"
+                    :style="{ backgroundColor: (descargando || !miSedeId) ? '#94a3b8' : '#ef4444' }"
                 >
                     <span v-if="descargando">⏳ Generando...</span>
                     <span v-else>📄 Descargar PDF</span>
                 </button>
             </div>
-            <!-- <div style="text-align: right; margin-top: 10px;">
-                <button 
-                    @click="descargarReporte" 
-                    :disabled="!form.sede_id || descargando"
-                    style="padding: 15px 30px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s;"
-                    :style="{ backgroundColor: (!form.sede_id || descargando) ? '#94a3b8' : '#10b981' }"
-                >
-                    <span v-if="descargando">⏳ Generando Excel...</span>
-                    <span v-else>📥 Descargar Reporte</span>
-                </button>
-            </div> -->
 
         </div>
     </div>
@@ -93,29 +75,31 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const sedes = ref([]);
+const miSedeId = ref(null);
+const miSedeNombre = ref('');
+const cargandoSede = ref(true);
 const descargando = ref(false);
 
 const obtenerFechaLocal = (fecha) => {
+    // Truco para evitar problemas con la zona horaria al convertir a ISOString
     const offset = fecha.getTimezoneOffset() * 60000;
     return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
 };
 
-// Inicializamos las fechas con el día de hoy por defecto (Formato YYYY-MM-DD)
-// const hoy = new Date().toISOString().split('T')[0];
 const hoy = obtenerFechaLocal(new Date());
 
 const form = ref({
-    sede_id: '',
     fecha_inicio: hoy,
     fecha_fin: hoy
 });
 
+// 🔥 LÓGICA DE LOS BOTONES RÁPIDOS (A prueba de todo)
 const setFiltro = (tipo) => {
     const fechaActual = new Date();
     const diaSemana = fechaActual.getDay(); // 0 = Domingo, 6 = Sábado
 
     if (tipo === 'hoy') {
+        // Validación quisquillosa para fines de semana
         if (diaSemana === 0 || diaSemana === 6) {
             Swal.fire({
                 icon: 'info',
@@ -130,9 +114,12 @@ const setFiltro = (tipo) => {
     else if (tipo === 'ayer') {
         let diasRestar = 1;
         
+        // Si hoy es Lunes (1), restamos 3 días para caer en Viernes
         if (diaSemana === 1) { 
             diasRestar = 3; 
-        } else if (diaSemana === 0) {
+        } 
+        // Si hoy es Domingo (0), restamos 2 días para caer en Viernes
+        else if (diaSemana === 0) {
             diasRestar = 2;
         }
         
@@ -149,70 +136,21 @@ const setFiltro = (tipo) => {
     }
 };
 
-// 1. Cargar las sedes para el selector
-const cargarSedes = async () => {
+const cargarMiSede = async () => {
     try {
-        // Asegúrate de que esta ruta devuelva todas las sedes activas para llenar el <select>
-        const response = await axios.get('/api/superadmin/sedes-lista'); 
+        const response = await axios.get('/api/admin/mi-sede');
         if (response.data.status === 'ok') {
-            sedes.value = response.data.sedes;
+            miSedeId.value = response.data.sede_id;
+            miSedeNombre.value = response.data.sede_nombre;
         }
     } catch (error) {
-        console.error("Error al cargar sedes:", error);
+        console.error("Error al cargar la sede del admin:", error);
+        Swal.fire('Error', 'No se pudo identificar tu sede asignada.', 'error');
+    } finally {
+        cargandoSede.value = false;
     }
 };
 
-// 2. Función para descargar el Excel
-// const descargarReporte = async () => {
-//     if (form.value.fecha_inicio > form.value.fecha_fin) {
-//         Swal.fire('Atención', 'La fecha de inicio no puede ser mayor a la fecha de fin.', 'warning');
-//         return;
-//     }
-
-//     descargando.value = true;
-
-//     try {
-//         // Construimos la URL con los parámetros
-//         const url = `/api/reportes/descargar?sede_id=${form.value.sede_id}&fecha_inicio=${form.value.fecha_inicio}&fecha_fin=${form.value.fecha_fin}`;
-
-//         // 🔥 CRÍTICO: Le decimos a Axios que esperamos un archivo binario (Blob), no un JSON
-//         const response = await axios.get(url, { responseType: 'blob' });
-
-//         // Truco de Javascript para forzar la descarga del archivo en el navegador
-//         const urlArchivo = window.URL.createObjectURL(new Blob([response.data]));
-//         const link = document.createElement('a');
-//         link.href = urlArchivo;
-        
-//         // Buscamos el nombre de la sede seleccionada para el nombre del archivo
-//         const sedeSeleccionada = sedes.value.find(s => s.id === form.value.sede_id);
-//         const nombreLimpio = sedeSeleccionada ? sedeSeleccionada.nombre.replace(/\s+/g, '_') : 'Sede';
-        
-//         link.setAttribute('download', `Reporte_${nombreLimpio}_${form.value.fecha_inicio}.xlsx`);
-        
-//         document.body.appendChild(link);
-//         link.click();
-        
-//         // Limpieza
-//         document.body.removeChild(link);
-//         window.URL.revokeObjectURL(urlArchivo);
-
-//         Swal.fire({
-//             toast: true,
-//             position: 'top-end',
-//             icon: 'success',
-//             title: 'Reporte descargado correctamente',
-//             showConfirmButton: false,
-//             timer: 3000
-//         });
-
-//     } catch (error) {
-//         console.error("Error descargando reporte", error);
-//         Swal.fire('Error', 'Hubo un problema al generar el reporte. Verifica que haya turnos en esas fechas.', 'error');
-//     } finally {
-//         descargando.value = false;
-//     }
-// };
-// Agregamos el parámetro "formato"
 const descargarReporte = async (formato) => {
     if (form.value.fecha_inicio > form.value.fecha_fin) {
         Swal.fire('Atención', 'La fecha de inicio no puede ser mayor a la fecha de fin.', 'warning');
@@ -222,8 +160,7 @@ const descargarReporte = async (formato) => {
     descargando.value = true;
 
     try {
-        // 🔥 Inyectamos el parámetro &formato= al final
-        const url = `/api/reportes/descargar?sede_id=${form.value.sede_id}&fecha_inicio=${form.value.fecha_inicio}&fecha_fin=${form.value.fecha_fin}&formato=${formato}`;
+        const url = `/api/reportes/descargar?sede_id=${miSedeId.value}&fecha_inicio=${form.value.fecha_inicio}&fecha_fin=${form.value.fecha_fin}&formato=${formato}`;
 
         const response = await axios.get(url, { responseType: 'blob' });
 
@@ -231,11 +168,9 @@ const descargarReporte = async (formato) => {
         const link = document.createElement('a');
         link.href = urlArchivo;
         
-        const sedeSeleccionada = sedes.value.find(s => s.id === form.value.sede_id);
-        const nombreLimpio = sedeSeleccionada ? sedeSeleccionada.nombre.replace(/\s+/g, '_') : 'Sede';
-        
-        // 🔥 Decidimos la extensión dinámica basada en el formato
+        const nombreLimpio = miSedeNombre.value.replace(/\s+/g, '_');
         const extension = formato === 'pdf' ? 'pdf' : 'xlsx';
+        
         link.setAttribute('download', `Reporte_${nombreLimpio}_${form.value.fecha_inicio}.${extension}`);
         
         document.body.appendChild(link);
@@ -244,14 +179,7 @@ const descargarReporte = async (formato) => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(urlArchivo);
 
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: `Reporte ${formato.toUpperCase()} descargado`,
-            showConfirmButton: false,
-            timer: 3000
-        });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Reporte descargado`, showConfirmButton: false, timer: 3000 });
 
     } catch (error) {
         console.error("Error descargando reporte", error);
@@ -262,6 +190,6 @@ const descargarReporte = async (formato) => {
 };
 
 onMounted(() => {
-    cargarSedes();
+    cargarMiSede();
 });
 </script>

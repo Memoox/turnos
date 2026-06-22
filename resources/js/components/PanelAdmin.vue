@@ -21,6 +21,12 @@
                 style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
                 👥 Gestión de Ventanillas
             </button>
+            <button 
+                @click="pestanaActual = 'reportes'" 
+                :style="{ background: pestanaActual === 'reportes' ? '#1e293b' : '#f8fafc', color: pestanaActual === 'reportes' ? 'white' : '#64748b' }"
+                style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                📄 Reportes
+            </button>
         </div>
 
         <div v-if="pestanaActual === 'dashboard'">
@@ -33,6 +39,9 @@
         <div v-if="pestanaActual === 'ventanas'">
             <GestionVentanillas />
         </div>
+        <div v-if="pestanaActual === 'reportes'">
+            <ReporteSede />
+        </div>
 
     </div>
 </template>
@@ -43,6 +52,7 @@ import axios from 'axios';
 import GestionCajeros from './GestionCajeros.vue';
 import GestionVentanillas from './GestionVentanillas.vue';
 import DashboardAdmin from './DashboardAdmin.vue'
+import ReporteSede from './ReporteSede.vue';
 
 const pestanaActual = ref('dashboard');
 const sedeNombre = ref('Cargando...');

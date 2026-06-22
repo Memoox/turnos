@@ -152,4 +152,26 @@ class ReporteController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al generar el reporte: ' . $e->getMessage()], 500);
         }
     }
+
+    public function obtenerMiSede(Request $request)
+    {
+        // Obtenemos al usuario autenticado
+        $user = $request->user(); 
+        
+        // Buscamos su sede
+        $sede = \App\Models\Sede::find($user->sede_id); 
+
+        if (!$sede) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'El usuario no tiene una sede asignada'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'sede_id' => $sede->id,
+            'sede_nombre' => $sede->nombre
+        ]);
+    }
 }

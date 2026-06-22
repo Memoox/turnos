@@ -1,7 +1,7 @@
 <template>
-    <div style="font-family: sans-serif; max-width: 1300px; margin: 10px auto; padding: 20px;">
+    <div style="font-family: sans-serif; max-width: 1300px; margin: 0 auto; ">
 
-        <h1 style="color: #0f172a; margin-bottom: 20px;">👑 Panel de Súper Administrador</h1>
+        <!-- <h1 style="color: #0f172a; margin-bottom: 20px;">👑 Panel de Súper Administrador</h1> -->
 
         <div style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
             <button @click="pestanaActual = 'mapa'" :style="btnStyle(pestanaActual === 'mapa')">📍 Mapa en Vivo</button>
@@ -16,7 +16,7 @@
             <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; color: #475569;">Monitor Global de Sucursales</h3>
                 <span style="background: #e0f2fe; color: #0284c7; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold;">
-                    🔄 Actualizando cada 2 minutos
+                    🔄 Actualizando cada 5 minutos
                 </span>
             </div>
 
@@ -122,7 +122,7 @@ watch(pestanaActual, (nuevaPestana) => {
 onMounted(() => {
     cargarMapa();
     // Consultamos cada 10 segundos
-    intervaloMapa = setInterval(cargarMapa, 150000); 
+    intervaloMapa = setInterval(cargarMapa, 300000); 
 });
 
 onUnmounted(() => {

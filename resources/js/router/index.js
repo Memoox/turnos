@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import PantallaTv from '../components/PantallaTv.vue';
 import Kiosco from '../components/Kiosco.vue';
 import PanelCajero from '../components/PanelCajero.vue';
-import Login from '../components/Login.vue'; // <-- Importamos el componente nuevo
+import Login from '../components/Login.vue'; 
 import PanelAdmin from '../components/PanelAdmin.vue';
 import PanelSuperadmin from '../components/PanelSuperadmin.vue';
 import MainLayout from '../components/MainLayout.vue';

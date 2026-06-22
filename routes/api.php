@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/admin/cajas/{id}/toggle', [AdminCajaController::class, 'toggleEstado']);
 
     Route::get('/reportes/descargar', [ReporteController::class, 'descargarReporteExcel']);
+    Route::get('/admin/mi-sede', [ReporteController::class, 'obtenerMiSede']);
 
     // RUTAS DEL SÚPER ADMINISTRADOR
     Route::prefix('superadmin')->group(function () {
