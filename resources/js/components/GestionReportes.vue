@@ -72,18 +72,6 @@
                     <span v-else>📄 Descargar PDF</span>
                 </button>
             </div>
-            <!-- <div style="text-align: right; margin-top: 10px;">
-                <button 
-                    @click="descargarReporte" 
-                    :disabled="!form.sede_id || descargando"
-                    style="padding: 15px 30px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s;"
-                    :style="{ backgroundColor: (!form.sede_id || descargando) ? '#94a3b8' : '#10b981' }"
-                >
-                    <span v-if="descargando">⏳ Generando Excel...</span>
-                    <span v-else>📥 Descargar Reporte</span>
-                </button>
-            </div> -->
-
         </div>
     </div>
 </template>
@@ -101,8 +89,6 @@ const obtenerFechaLocal = (fecha) => {
     return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
 };
 
-// Inicializamos las fechas con el día de hoy por defecto (Formato YYYY-MM-DD)
-// const hoy = new Date().toISOString().split('T')[0];
 const hoy = obtenerFechaLocal(new Date());
 
 const form = ref({
@@ -149,10 +135,8 @@ const setFiltro = (tipo) => {
     }
 };
 
-// 1. Cargar las sedes para el selector
 const cargarSedes = async () => {
     try {
-        // Asegúrate de que esta ruta devuelva todas las sedes activas para llenar el <select>
         const response = await axios.get('/api/superadmin/sedes-lista'); 
         if (response.data.status === 'ok') {
             sedes.value = response.data.sedes;
@@ -162,57 +146,6 @@ const cargarSedes = async () => {
     }
 };
 
-// 2. Función para descargar el Excel
-// const descargarReporte = async () => {
-//     if (form.value.fecha_inicio > form.value.fecha_fin) {
-//         Swal.fire('Atención', 'La fecha de inicio no puede ser mayor a la fecha de fin.', 'warning');
-//         return;
-//     }
-
-//     descargando.value = true;
-
-//     try {
-//         // Construimos la URL con los parámetros
-//         const url = `/api/reportes/descargar?sede_id=${form.value.sede_id}&fecha_inicio=${form.value.fecha_inicio}&fecha_fin=${form.value.fecha_fin}`;
-
-//         // 🔥 CRÍTICO: Le decimos a Axios que esperamos un archivo binario (Blob), no un JSON
-//         const response = await axios.get(url, { responseType: 'blob' });
-
-//         // Truco de Javascript para forzar la descarga del archivo en el navegador
-//         const urlArchivo = window.URL.createObjectURL(new Blob([response.data]));
-//         const link = document.createElement('a');
-//         link.href = urlArchivo;
-        
-//         // Buscamos el nombre de la sede seleccionada para el nombre del archivo
-//         const sedeSeleccionada = sedes.value.find(s => s.id === form.value.sede_id);
-//         const nombreLimpio = sedeSeleccionada ? sedeSeleccionada.nombre.replace(/\s+/g, '_') : 'Sede';
-        
-//         link.setAttribute('download', `Reporte_${nombreLimpio}_${form.value.fecha_inicio}.xlsx`);
-        
-//         document.body.appendChild(link);
-//         link.click();
-        
-//         // Limpieza
-//         document.body.removeChild(link);
-//         window.URL.revokeObjectURL(urlArchivo);
-
-//         Swal.fire({
-//             toast: true,
-//             position: 'top-end',
-//             icon: 'success',
-//             title: 'Reporte descargado correctamente',
-//             showConfirmButton: false,
-//             timer: 3000
-//         });
-
-//     } catch (error) {
-//         console.error("Error descargando reporte", error);
-//         Swal.fire('Error', 'Hubo un problema al generar el reporte. Verifica que haya turnos en esas fechas.', 'error');
-//     } finally {
-//         descargando.value = false;
-//     }
-// };
-// Agregamos el parámetro "formato"
 const descargarReporte = async (formato) => {
     if (form.value.fecha_inicio > form.value.fecha_fin) {
         Swal.fire('Atención', 'La fecha de inicio no puede ser mayor a la fecha de fin.', 'warning');
@@ -222,7 +155,6 @@ const descargarReporte = async (formato) => {
     descargando.value = true;
 
     try {
-        // 🔥 Inyectamos el parámetro &formato= al final
         const url = `/api/reportes/descargar?sede_id=${form.value.sede_id}&fecha_inicio=${form.value.fecha_inicio}&fecha_fin=${form.value.fecha_fin}&formato=${formato}`;
 
         const response = await axios.get(url, { responseType: 'blob' });
@@ -233,8 +165,7 @@ const descargarReporte = async (formato) => {
         
         const sedeSeleccionada = sedes.value.find(s => s.id === form.value.sede_id);
         const nombreLimpio = sedeSeleccionada ? sedeSeleccionada.nombre.replace(/\s+/g, '_') : 'Sede';
-        
-        // 🔥 Decidimos la extensión dinámica basada en el formato
+       
         const extension = formato === 'pdf' ? 'pdf' : 'xlsx';
         link.setAttribute('download', `Reporte_${nombreLimpio}_${form.value.fecha_inicio}.${extension}`);
         

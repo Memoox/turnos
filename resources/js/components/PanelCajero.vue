@@ -45,18 +45,15 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
-// Guardaremos todo el objeto que devuelva Laravel
 const cajero = ref(null); 
 const totalPendientes = ref(0);
 const turnoActual = ref(null);
 
-// 1. FUNCIÓN PARA IDENTIFICAR AL USUARIO LOGUEADO
 const consultarPerfil = async () => {
     try {
         const response = await axios.get('/api/me');
         cajero.value = response.data.user;
 
-        // Si el usuario tiene una sede asignada, disparamos el flujo dinámico
         if (cajero.value && cajero.value.sede_id) {
             actualizarPendientes(cajero.value.sede_id);
             conectarWebSocket(cajero.value.sede_id);
@@ -69,7 +66,6 @@ const consultarPerfil = async () => {
     }
 };
 
-// 2. FUNCIÓN PARA CONTAR LA FILA (Ahora requiere la Sede por parámetro)
 const actualizarPendientes = async (sedeId) => {
     try {
         const response = await axios.get(`/api/turnos/pendientes/${sedeId}`);
@@ -82,25 +78,22 @@ const actualizarPendientes = async (sedeId) => {
     }
 };
 
-// 3. CONECTAR AL CANAL CORRECTO BASADO EN LA RESPUESTA DE LA API
 const conectarWebSocket = (sedeId) => {
-    console.log(`📡 Escuchando en tiempo real el canal: field ->` + ` sede.${sedeId}.pendientes`);
+    // console.log(`📡 Escuchando en tiempo real el canal: field ->` + ` sede.${sedeId}.pendientes`);
 
     window.Echo.channel(`sede.${sedeId}.pendientes`)
         .listen('TurnoGenerado', (e) => {
-            console.log('🎟️ ¡Nuevo boleto detectado en la entrada!');
+            // console.log('🎟️ ¡Nuevo boleto detectado en la entrada!');
             actualizarPendientes(sedeId);
         });
 };
 
-// 4. BOTÓN LLAMAR SIGUIENTE
 const llamarSiguiente = async () => {
     try {
         const response = await axios.post('/api/turnos/atender');
 
         if (response.data.status === 'ok') {
             turnoActual.value = response.data.turno;
-            // Refrescamos usando la sede de nuestro objeto reactivo
             actualizarPendientes(cajero.value.sede_id); 
         } else if (response.data.status === 'no-data') {
             alert('¡Excelente trabajo! Ya no hay turnos en la fila.');
@@ -116,7 +109,7 @@ const terminarTurno = async () => {
         const response = await axios.post('/api/turnos/finalizar');
         
         if (response.data.status === 'ok') {
-            turnoActual.value = null; // Vaciamos la pantalla local
+            turnoActual.value = null; 
             alert('¡Turno finalizado! Ventanilla libre.');
         }
     } catch (error) {
@@ -127,7 +120,6 @@ const terminarTurno = async () => {
 
 
 onMounted(() => {
-    // Al arrancar, lo primero que hacemos es averiguar quién es el usuario
     consultarPerfil();
 });
 

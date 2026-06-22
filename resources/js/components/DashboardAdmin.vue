@@ -91,7 +91,6 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
-// 1. Variables reactivas inicializadas
 const sedeNombre = ref('Cargando...');
 const resumen = ref({
     enEspera: 0,
@@ -101,10 +100,10 @@ const resumen = ref({
 const cajas = ref([]);
 const fila = ref([]);
 const sedeId = ref(null);
-// 2. Función que llama al Backend
+
 const cargarDashboard = async () => {
     try {
-        // Asegúrate de que esta URL sea exactamente la misma ruta que usas en tu api.php para adminStats
+       
         const response = await axios.get('/api/dashboard/admin'); 
         
         if (response.data.status === 'ok') {
@@ -120,9 +119,7 @@ const cargarDashboard = async () => {
 };
 
 onMounted(() => {
-    // Al abrir la pantalla, traemos los datos de la base de datos
     cargarDashboard();
-
 });
 
 defineExpose({

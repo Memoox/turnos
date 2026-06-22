@@ -10,7 +10,6 @@
 
         <div v-else>
             <div style="text-align: center; margin-bottom: 40px;">
-                <!-- <h1 style="margin-bottom: 5px;">📺 Pantalla de Sala de Espera</h1> -->
                 <h1 style="margin-bottom: 5px;">📺 BIENVENIDO</h1>
                 <h2 style="color: #6b7280; margin-top: 0;">📍 {{ sedeNombre || 'Cargando información...' }}</h2>
             </div>
@@ -60,7 +59,6 @@ const turnoActual = ref(null);
 const cajaAsignada = ref(null);
 const historialTurnos = ref([]);
 
-// 🔥 Nueva variable para guardar el nombre
 const sedeNombre = ref(''); 
 
 const iniciarPantalla = () => {
@@ -99,7 +97,6 @@ const consultarEstadoInicial = async () => {
         const response = await axios.get(`/api/turnos/pantalla/${sedeId}`);
         if (response.data.status === 'ok') {
             
-            // 🔥 Atrapamos el nombre de la sede desde el backend
             sedeNombre.value = response.data.sede_nombre;
 
             historialTurnos.value = response.data.turnos;
@@ -109,7 +106,7 @@ const consultarEstadoInicial = async () => {
                 cajaAsignada.value = ultimoLlamado.caja;
             }
         } else if (response.data.status === 'no-data') {
-            sedeNombre.value = response.data.sede_nombre; // Lo atrapamos también si no hay turnos
+            sedeNombre.value = response.data.sede_nombre;
             historialTurnos.value = response.data.turnos;
         }
     } catch (error) {

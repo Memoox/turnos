@@ -81,7 +81,7 @@ const cargandoSede = ref(true);
 const descargando = ref(false);
 
 const obtenerFechaLocal = (fecha) => {
-    // Truco para evitar problemas con la zona horaria al convertir a ISOString
+    
     const offset = fecha.getTimezoneOffset() * 60000;
     return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
 };
@@ -93,13 +93,13 @@ const form = ref({
     fecha_fin: hoy
 });
 
-// 🔥 LÓGICA DE LOS BOTONES RÁPIDOS (A prueba de todo)
+
 const setFiltro = (tipo) => {
     const fechaActual = new Date();
     const diaSemana = fechaActual.getDay(); // 0 = Domingo, 6 = Sábado
 
     if (tipo === 'hoy') {
-        // Validación quisquillosa para fines de semana
+        
         if (diaSemana === 0 || diaSemana === 6) {
             Swal.fire({
                 icon: 'info',
@@ -114,11 +114,11 @@ const setFiltro = (tipo) => {
     else if (tipo === 'ayer') {
         let diasRestar = 1;
         
-        // Si hoy es Lunes (1), restamos 3 días para caer en Viernes
+        
         if (diaSemana === 1) { 
             diasRestar = 3; 
         } 
-        // Si hoy es Domingo (0), restamos 2 días para caer en Viernes
+        
         else if (diaSemana === 0) {
             diasRestar = 2;
         }

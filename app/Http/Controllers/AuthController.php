@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // 1. Iniciar Sesión
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -16,7 +15,6 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
-            // Genera la sesión segura de Laravel
             $request->session()->regenerate();
 
             $user = Auth::user()->load('rol');
@@ -33,7 +31,6 @@ class AuthController extends Controller
         ], 401);
     }
 
-    // 2. Cerrar Sesión
     public function logout(Request $request)
     {
         Auth::guard('web')->logout();
@@ -44,10 +41,8 @@ class AuthController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    // 3. Obtener el usuario actual (Para que Vue sepa si hay sesión activa)
     public function me(Request $request)
     {
-        // Cargamos al usuario junto con su sede y su caja asignada
         $user = $request->user()->load(['sede', 'caja', 'rol']);
 
         return response()->json([

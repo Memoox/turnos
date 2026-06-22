@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sede_id')->constrained('sedes')->cascadeOnDelete();
             $table->string('nombre'); // Ej: 'Ventanilla 1'
-            $table->boolean('status')->default(true); // Activa o inactiva
+            // $table->boolean('status')->default(true); // Activa o inactiva
             $table->softDeletes();
             $table->timestamps();
         });

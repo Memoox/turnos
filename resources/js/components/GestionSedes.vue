@@ -133,8 +133,6 @@ const paginaActual = ref(1);
 const ultimaPagina = ref(1);
 const totalRegistros = ref(0);
 
-
-// 1. Cargar datos
 const cargarSedes = async (page = 1) => {
     try {
         const response = await axios.get(`/api/superadmin/sedes?page=${page}&search=${buscador.value}`);
@@ -147,7 +145,6 @@ const cargarSedes = async (page = 1) => {
     }
 };
 
-// 2. Controladores del Modal
 const abrirModalNuevo = () => {
     formulario.value = { id: null, nombre: '' };
     modoEdicion.value = false;
@@ -164,7 +161,6 @@ const cerrarModal = () => {
     mostrarModal.value = false;
 };
 
-// 3. Crear o Actualizar
 const guardarSede = async () => {
     if (!formulario.value.nombre.trim()) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: 'El nombre es obligatorio' });
@@ -191,13 +187,11 @@ const guardarSede = async () => {
             const errores = error.response.data.errors;
             let msjHTML = "<ul style='text-align: left; color: #ef4444;'>";
             
-            // Convertimos los errores en una lista HTML
             for (let campo in errores) { 
                 msjHTML += `<li>${errores[campo][0]}</li>`; 
             }
             msjHTML += "</ul>";
 
-            // Lanzamos el modal de error de SweetAlert
             Swal.fire({
                 icon: 'error',
                 title: 'Verifica los datos',
@@ -217,7 +211,6 @@ const guardarSede = async () => {
     }
 };
 
-// 4. Dar de baja / Reactivar (SoftDelete)
 const cambiarEstado = async (sede) => {
     const accion = sede.is_active ? 'dar de baja' : 'reactivar';
     const textoAlerta = sede.is_active 
@@ -237,7 +230,6 @@ const cambiarEstado = async (sede) => {
         cancelButtonText: 'Cancelar'
     });
 
-    // Si el usuario dijo que sí, ejecutamos el Axios
     if (result.isConfirmed) {
         try {
             await axios.put(`/api/superadmin/sedes/${sede.id}/toggle`);
@@ -254,9 +246,9 @@ const eliminarDefinitivo = async (sede) => {
     const result = await Swal.fire({
         title: '¿Destrucción Total?',
         text: "Esto borrará la sede de la base de datos permanentemente. Esta acción no se puede deshacer.",
-        icon: 'error', // Usamos el ícono de peligro
+        icon: 'error', 
         showCancelButton: true,
-        confirmButtonColor: '#dc2626', // Rojo alerta
+        confirmButtonColor: '#dc2626',
         cancelButtonColor: '#94a3b8',
         confirmButtonText: 'Sí, destruir',
         cancelButtonText: 'Cancelar'
@@ -265,14 +257,11 @@ const eliminarDefinitivo = async (sede) => {
     if (result.isConfirmed) {
         try {
             await axios.delete(`/api/superadmin/sedes/${sede.id}/force`);
-            
-            // Recargamos la tabla en la página actual
             cargarSedes(paginaActual.value); 
             
             Toast.fire({ icon: 'success', title: 'Sede destruida exitosamente' });
             
         } catch (error) {
-            // Si Laravel nos devuelve nuestro error 400 (porque tiene historial)
             if (error.response && error.response.status === 400) {
                 Swal.fire({
                     icon: 'warning',
@@ -288,12 +277,10 @@ const eliminarDefinitivo = async (sede) => {
 };
 
 const buscarConPausa = () => {
-    // Si el usuario teclea rápido, cancelamos el temporizador anterior
     if (timeoutBuscador) {
         clearTimeout(timeoutBuscador);
     }
     
-    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
     timeoutBuscador = setTimeout(() => {
         cargarSedes(1);
     }, 600); 

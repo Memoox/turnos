@@ -1,7 +1,5 @@
 <template>
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        
-        
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
             <h2 style="margin: 0; color: #1e293b;">👥 Catálogo de Usuarios</h2>
             
@@ -179,7 +177,6 @@ const buscador = ref('');
 
 let timeoutBuscador = null;
 
-// 1. Cargar datos
 const cargarUsuarios = async (page = 1) => {
     try {
         const response = await axios.get(`/api/superadmin/usuarios?page=${page}&search=${buscador.value}`);
@@ -195,7 +192,6 @@ const cargarUsuarios = async (page = 1) => {
     }
 };
 
-// 2. Modal
 const abrirModalNuevo = () => {
     formulario.value = { id: null, name: '', email: '', password: '', rol_id: 2, sede_id: '' };
     modoEdicion.value = false;
@@ -219,13 +215,12 @@ const cerrarModal = () => {
     mostrarModal.value = false;
 };
 
-// 3. Guardar
 const guardarUsuario = async () => {
     if (!formulario.value.name || !formulario.value.email) {
         Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Nombre y correo son obligatorios.' });
         return;
     }
-    // Validamos que los mortales (Admin/Cajero) tengan sede
+    // Validamos que (Admin/Cajero) tengan sede
     if (formulario.value.rol_id != 1 && !formulario.value.sede_id) {
         Swal.fire({ icon: 'warning', title: 'Falta Sede', text: 'Debes asignar una sede para este rol.' });
         return;
@@ -260,7 +255,6 @@ const guardarUsuario = async () => {
     }
 };
 
-// 4. Baja Lógica
 const cambiarEstado = async (user) => {
     const accion = user.is_active ? 'dar de baja' : 'reactivar';
     const textoAlerta = user.is_active 
@@ -292,7 +286,6 @@ const cambiarEstado = async (user) => {
     }
 };
 
-// En el <script setup>
 const eliminarDefinitivo = async (user) => {
     const result = await Swal.fire({
         title: '¿Destrucción Total?',
@@ -321,12 +314,11 @@ const eliminarDefinitivo = async (user) => {
 };
 
 const buscarConPausa = () => {
-    // Si el usuario teclea rápido, cancelamos el temporizador anterior
+    
     if (timeoutBuscador) {
         clearTimeout(timeoutBuscador);
     }
     
-    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
     timeoutBuscador = setTimeout(() => {
         cargarUsuarios(1);
     }, 600); 

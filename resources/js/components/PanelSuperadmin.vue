@@ -1,8 +1,6 @@
 <template>
     <div style="font-family: sans-serif; max-width: 1300px; margin: 0 auto; ">
 
-        <!-- <h1 style="color: #0f172a; margin-bottom: 20px;">👑 Panel de Súper Administrador</h1> -->
-
         <div style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
             <button @click="pestanaActual = 'mapa'" :style="btnStyle(pestanaActual === 'mapa')">📍 Mapa en Vivo</button>
             <button @click="pestanaActual = 'sedes'" :style="btnStyle(pestanaActual === 'sedes')">🏢 Sedes</button>
@@ -86,11 +84,10 @@ import GestionTramites from './GestionTramites.vue';
 import GestionAdministradores from './GestionAdministradores.vue';
 import GestionReportes from './GestionReportes.vue';
 
-const pestanaActual = ref('mapa'); // Empezamos en la pestaña de sedes para probar
+const pestanaActual = ref('mapa');
 const sedesData = ref([]); 
-let intervaloMapa = null; // Guardamos el intervalo para poder apagarlo si salimos
+let intervaloMapa = null; 
 
-// Estilo dinámico para los botones de las pestañas
 const btnStyle = (activo) => ({
     padding: '10px 15px',
     border: 'none',
@@ -101,7 +98,6 @@ const btnStyle = (activo) => ({
     cursor: 'pointer'
 });
 
-// Tu función original del mapa
 const cargarMapa = async () => {
     try {
         const response = await axios.get('/api/superadmin/dashboard');
@@ -115,18 +111,16 @@ const cargarMapa = async () => {
 
 watch(pestanaActual, (nuevaPestana) => {
     if (nuevaPestana === 'mapa') {
-        cargarMapa(); // Si el usuario regresa al mapa, recargamos los datos al instante
+        cargarMapa(); 
     }
 });
 
 onMounted(() => {
     cargarMapa();
-    // Consultamos cada 10 segundos
     intervaloMapa = setInterval(cargarMapa, 300000); 
 });
 
 onUnmounted(() => {
-    // Si el Superadmin cierra la pestaña o sale, apagamos el reloj
     if (intervaloMapa) clearInterval(intervaloMapa);
 });
 </script>

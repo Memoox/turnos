@@ -33,7 +33,6 @@ const router = useRouter();
 const rolUsuario = ref('');
 
 onMounted(() => {
-    // Leemos el rol y le ponemos la primera letra en mayúscula para que se vea bonito
     const rol = localStorage.getItem('user_rol') || 'Desconocido';
     rolUsuario.value = rol.charAt(0).toUpperCase() + rol.slice(1);
 });

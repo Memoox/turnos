@@ -65,9 +65,7 @@ const obtenerSede = async () => {
        const response = await axios.get('/api/dashboard/admin'); 
         
         if (response.data.status === 'ok') {
-            sedeIdActual.value = response.data.sede_id; // ¡Ahora sí lo va a encontrar!
-            
-            // Ya que sabemos la sede, conectamos la antena
+            sedeIdActual.value = response.data.sede_id; 
             conectarWebSocket(sedeIdActual.value);
         }
     } catch (error) {
@@ -76,15 +74,14 @@ const obtenerSede = async () => {
 };
 
 const conectarWebSocket = (sedeId) => {
-    console.log(`📡 Admin escuchando actividad de la sede: ${sedeId}`);
+    // console.log(`📡 Admin escuchando actividad de la sede: ${sedeId}`);
 
     // Escuchamos el mismo canal de la fila que usa el Cajero
     window.Echo.channel(`sede.${sedeId}.pendientes`)
         .listen('TurnoGenerado', () => {
-            console.log('🎟️ Nuevo turno en recepción. Actualizando números...');
+            // console.log('🎟️ Nuevo turno en recepción. Actualizando números...');
 
             setTimeout(() => {
-                // Usamos un 'if' por si el admin está en la pestaña de 'Cajeros' y el componente no existe en ese momento
                 if (monitorComponent.value) {
                     monitorComponent.value.cargarDashboard();
                 }
@@ -95,7 +92,7 @@ const conectarWebSocket = (sedeId) => {
     // Escuchamos el canal de la TV por si un cajero atiende a alguien
     window.Echo.channel(`sede.${sedeId}.pantalla`)
         .listen('TurnoLlamado', () => {
-            console.log('🗣️ Turno atendido. Actualizando números...');
+            // console.log('🗣️ Turno atendido. Actualizando números...');
 
             setTimeout(() => {
                 if (monitorComponent.value) {

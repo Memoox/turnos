@@ -55,10 +55,9 @@ const handleLogin = async () => {
     errorMessage.value = '';
 
     try {
-        // 1. Inicializamos el escudo de protección CSRF de Laravel
+
         await axios.get('/sanctum/csrf-cookie');
 
-        // 2. Disparamos las credenciales a nuestra API
         const response = await axios.post('/api/login', {
             email: email.value,
             password: password.value
@@ -68,11 +67,10 @@ const handleLogin = async () => {
             const user = response.data.user;
 
             const claveRol = user.rol.clave;
-            
-            // Guardamos temporalmente el rol en localStorage para el Router
+           
             localStorage.setItem('user_rol', claveRol);
 
-            // 3. Redirección inteligente basada en el rol real
+            //Redirección inteligente
             switch (claveRol) {
                 case 'superadmin':
                     await router.push('/superadmin');

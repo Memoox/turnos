@@ -136,7 +136,6 @@ const Toast = Swal.mixin({
 const cajas = ref([]);
 const tiposTurnosGlobales = ref([]); 
 
-// Paginación y Búsqueda
 const buscador = ref('');
 const paginaActual = ref(1);
 const totalPaginas = ref(1);
@@ -245,7 +244,13 @@ const cambiarEstado = async (caja) => {
             cargarDatos(paginaActual.value); 
             Toast.fire({ icon: 'success', title: estadoFinal });
         } catch (error) {
-            Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
+            let mensajeError = 'No se pudo cambiar el estado.';
+            
+            if (error.response && error.response.data && error.response.data.message) {
+                mensajeError = error.response.data.message;
+            }
+
+            Swal.fire('No es posible reactivar', mensajeError, 'warning');
         }
     }
 };

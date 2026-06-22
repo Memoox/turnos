@@ -17,16 +17,11 @@ class DashboardController extends Controller
         $sedeId = $user->sede_id;
         $hoy = Carbon::today();
 
-        // ==========================================
-        // 1. KPIs (RESUMEN SUPERIOR)
-        // ==========================================
-        // Usamos tu lógica: status = 0 es "En espera"
         $enEspera = Turno::where('sede_id', $sedeId)
             ->where('status', 0) 
             ->whereDate('created_at', $hoy)
             ->count();
 
-        // Asumo que status = 2 es "Atendido" (Cámbialo si usas otro número)
         $atendidosHoy = Turno::where('sede_id', $sedeId)
             ->where('status', 2) 
             ->whereDate('created_at', $hoy)
@@ -38,21 +33,18 @@ class DashboardController extends Controller
 
         $promediosHoy = Turno::where('sede_id', $sedeId)
             ->whereDate('created_at', $hoy)
-            ->whereIn('status', [1, 2]) // Los que ya fueron llamados o terminaron
+            ->whereIn('status', [1, 2]) 
             ->get()
             ->groupBy('tipo_turno_id')
             ->map(function ($turnos) {
                 // Sacamos el promedio de minutos que esperó cada turno
                 $promedio = $turnos->avg(function ($turno) {
-                    // diffInMinutes es una función nativa mágica de Carbon
                     return $turno->created_at->diffInMinutes($turno->updated_at);
                 });
-                return round($promedio); // Redondeamos para evitar decimales (ej. 5.33 min)
+                return round($promedio); 
             });
 
-        // ==========================================
-        // 2. CUADRÍCULA DE VENTANILLAS
-        // ==========================================
+        
         $cajas = Caja::where('sede_id', $sedeId)->get();
         
         $cajerosActivos = User::where('sede_id', $sedeId)
@@ -60,7 +52,6 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('caja_id');
 
-        // Asumo que status = 1 es "En Atención" (Llamando en ventanilla)
         $turnosEnAtencion = Turno::where('sede_id', $sedeId)
             ->whereDate('created_at', $hoy)
             ->where('status', 1) 
@@ -75,18 +66,15 @@ class DashboardController extends Controller
                 'id' => $caja->id,
                 'nombre' => $caja->nombre,
                 'cajero' => $cajero ? ['name' => $cajero->name] : null,
-                // Ajusta 'folio' al nombre real de la columna de tu BD (ej. clave_turno)
                 'turno_actual' => $turnoActual ? $turnoActual->numero_turno : null 
             ];
         });
 
-        // ==========================================
-        // 3. LA FILA POR TRÁMITE (AGRUPACIÓN)
-        // ==========================================
+       
         $fila = Turno::with('tipoTurno')
             ->where('sede_id', $sedeId)
             ->whereDate('created_at', $hoy)
-            ->where('status', 0) // Solo los que están en espera
+            ->where('status', 0) 
             ->get()
             ->groupBy('tipo_turno_id')
             ->map(function ($turnos) use ($promediosHoy) {
@@ -94,10 +82,8 @@ class DashboardController extends Controller
                 $tipoId = $turnos->first()->tipo_turno_id;
                 $nombreTramite = $turnos->first()->tipoTurno->descripcion ?? 'Desconocido';
 
-                // Buscamos si ya tenemos un promedio calculado para este trámite hoy
                 $minutos = $promediosHoy->get($tipoId);
-                
-                // Si nadie ha pasado hoy a este trámite, mostramos "Calculando..."
+
                 $textoTiempo = $minutos !== null ? $minutos . ' min' : 'Calculando...';
 
                 return [
@@ -108,7 +94,6 @@ class DashboardController extends Controller
                 ];
             })->values();
 
-        // Enviamos todo con la estructura que Vue espera
         return response()->json([
             'status' => 'ok',
             'sede_id' => $sedeId,
@@ -125,7 +110,6 @@ class DashboardController extends Controller
 
     public function superadminStats()
     {
-        // ... (Tu función de superadmin queda exactamente igual) ...
         $sedes = Sede::all()->map(function ($sede) {
             $hoy = Carbon::today();
             $turnosEspera = Turno::where('sede_id', $sede->id)

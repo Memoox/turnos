@@ -16,7 +16,6 @@
             <button @click="abrirModalNuevo" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
                 + Nuevo Cajero
             </button>
-            
         </div>
 
         <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -147,11 +146,9 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-// Variables reactivas para los datos
 const cajeros = ref([]);
 const cajas = ref([]);
 
-// 🔥 Variables de Paginación y Búsqueda
 const buscador = ref('');
 const paginaActual = ref(1);
 const ultimaPagina = ref(1);
@@ -171,7 +168,6 @@ const form = ref({
     caja_id: ''
 });
 
-// 🔥 Cargar datos (Ahora con parámetros de búsqueda y página)
 const cargarDatos = async (pagina = 1) => {
     try {
         const response = await axios.get(`/api/admin/cajeros?page=${pagina}&search=${buscador.value}`);
@@ -218,8 +214,6 @@ const guardarCajero = async () => {
             await axios.post('/api/admin/cajeros', form.value);
         }
         mostrarModal.value = false;
-        
-        // 🔥 Recargamos manteniendo la página y búsqueda actual
         cargarDatos(paginaActual.value); 
 
         Toast.fire({
@@ -262,8 +256,6 @@ const cambiarEstado = async (cajero) => {
     if (result.isConfirmed) {
         try {
             await axios.patch(`/api/admin/cajeros/${cajero.id}/toggle`);
-            
-            // 🔥 Como ya tenemos variable reactiva, podemos mandarle en qué página estábamos
             cargarDatos(paginaActual.value); 
             
             Swal.fire(
@@ -288,12 +280,10 @@ const cajasDisponibles = computed(() => {
 });
 
 const buscarConPausa = () => {
-    // Si el usuario teclea rápido, cancelamos el temporizador anterior
     if (timeoutBuscador) {
         clearTimeout(timeoutBuscador);
     }
-    
-    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
+ 
     timeoutBuscador = setTimeout(() => {
         cargarDatos(1);
     }, 600); 

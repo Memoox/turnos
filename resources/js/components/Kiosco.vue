@@ -68,7 +68,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
-import Swal from 'sweetalert2'; // Agregamos SweetAlert para errores
+import Swal from 'sweetalert2'; 
 
 const ticketImprimir = ref(null);
 const route = useRoute();
@@ -78,7 +78,7 @@ const nombreSede = ref('');
 const tiposTurno = ref([]);
 const turnoGenerado = ref(null);
 const cargando = ref(true);
-const procesando = ref(false); // 🔥 Bandera Anti-Spam
+const procesando = ref(false);
 
 const cargarTiposDeTurno = async () => {
     try {
@@ -95,7 +95,6 @@ const cargarTiposDeTurno = async () => {
 };
 
 const solicitarTurno = async (tipoTurnoId) => {
-    // Si ya está procesando una solicitud, ignoramos los siguientes toques
     if (procesando.value) return; 
     
     procesando.value = true;
@@ -109,18 +108,14 @@ const solicitarTurno = async (tipoTurnoId) => {
         if (response.data.status === 'ok') {
             turnoGenerado.value = response.data.turno.numero_turno; 
 
-            // (Lógica de impresión pendiente)
-            
-            // Damos un poco más de tiempo (6 segundos) para que lean la pantalla
             setTimeout(() => {
                 turnoGenerado.value = null;
-                procesando.value = false; // Liberamos el kiosco para el siguiente ciudadano
+                procesando.value = false; 
             }, 6000);
         }
     } catch (error) {
         console.error("Error al generar el turno:", error);
-        
-        // Reemplazamos el alert nativo por un modal profesional
+
         Swal.fire({
             icon: 'error',
             title: 'No se pudo generar el turno',
@@ -129,7 +124,7 @@ const solicitarTurno = async (tipoTurnoId) => {
             confirmButtonText: 'Entendido'
         });
         
-        procesando.value = false; // Liberamos si hubo error
+        procesando.value = false;
     }
 };
 
@@ -144,24 +139,19 @@ button:hover:not(:disabled) {
     background-color: #1d4ed8 !important;
 }
 
-/* 🔥 MAGIA CSS PARA LA IMPRESIÓN */
 @media screen {
-    /* En la pantalla normal (iPad/Monitor), el ticket jamás se ve */
     #ticket-termico {
         display: none !important;
     }
 }
 
 @media print {
-    /* A la hora de imprimir, ocultamos toda la interfaz del kiosco */
     body * {
         visibility: hidden;
     }
-    /* Y solo mostramos el bloque del ticket y sus elementos internos */
     #ticket-termico, #ticket-termico * {
         visibility: visible;
     }
-    /* Lo posicionamos en la esquina superior izquierda para la impresora térmica */
     #ticket-termico {
         position: absolute;
         left: 0;

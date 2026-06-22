@@ -14,15 +14,13 @@ class SuperadminDashboardController extends Controller
         try {
             $hoy = Carbon::today();
 
-            // 1. Traemos solo las sedes activas (las que NO tienen SoftDelete)
             $sedes = Sede::withTrashed()->orderBy('nombre', 'asc')->get()->map(function ($sede) use ($hoy) {
                 
-                // 2. Buscamos todos los turnos de esta sede creados hoy
                 $turnosHoy = Turno::where('sede_id', $sede->id)
                     ->whereDate('created_at', $hoy)
                     ->get();
 
-                // 3. Empaquetamos las métricas
+
                 return [
                     'id' => $sede->id,
                     'nombre' => $sede->nombre,

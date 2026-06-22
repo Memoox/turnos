@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 
 class SuperadminTipoTurnoController extends Controller
 {
-    // 1. Obtener todos los trámites (y la lista de sedes para el formulario)
     public function index(Request $request)
     {
         try {
@@ -43,7 +42,6 @@ class SuperadminTipoTurnoController extends Controller
         }
     }
 
-    // 2. Crear Trámite
     public function store(Request $request)
     {
         $request->validate([

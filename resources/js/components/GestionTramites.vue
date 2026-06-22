@@ -149,10 +149,8 @@ const totalRegistros = ref(0);
 
 let timeoutBuscador = null;
 
-// El formulario ahora incluye un arreglo de 'sedes'
 const formulario = ref({ id: null, clave: '', descripcion: '', sedes: [] });
 
-// 1. Cargar datos
 const cargarTramites = async (page = 1) => {
     try {
         const response = await axios.get(`/api/superadmin/tramites?page=${page}&search=${buscador.value}`);
@@ -166,7 +164,6 @@ const cargarTramites = async (page = 1) => {
     }
 };
 
-// 2. Controladores del Modal
 const abrirModalNuevo = () => {
     formulario.value = { id: null, clave: '', descripcion: '', sedes: [] };
     modoEdicion.value = false;
@@ -174,7 +171,6 @@ const abrirModalNuevo = () => {
 };
 
 const editarTramite = (tramite) => {
-    // Al editar, mapeamos las sedes que ya tiene asignadas para que los checkboxes se palomeen solos
     const sedesAsignadas = tramite.sedes.map(sede => sede.id);
     
     formulario.value = { 
@@ -191,7 +187,6 @@ const cerrarModal = () => {
     mostrarModal.value = false;
 };
 
-// 3. Crear o Actualizar
 const guardarTramite = async () => {
     if (!formulario.value.clave.trim() || !formulario.value.descripcion.trim()) {
         Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'La clave y la descripción son obligatorias.' });
@@ -227,7 +222,6 @@ const guardarTramite = async () => {
     }
 };
 
-// 4. SoftDelete
 const cambiarEstado = async (tramite) => {
     const accion = tramite.is_active ? 'dar de baja' : 'reactivar';
     const textoAlerta = tramite.is_active 
@@ -286,12 +280,10 @@ const eliminarDefinitivo = async (tramite) => {
 };
 
 const buscarConPausa = () => {
-    // Si el usuario teclea rápido, cancelamos el temporizador anterior
     if (timeoutBuscador) {
         clearTimeout(timeoutBuscador);
     }
-    
-    // Iniciamos un nuevo temporizador de 500 milisegundos (medio segundo)
+
     timeoutBuscador = setTimeout(() => {
         cargarTramites(1);
     }, 600); 

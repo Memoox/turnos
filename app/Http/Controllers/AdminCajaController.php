@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class AdminCajaController extends Controller
 {
-    // 1. LISTAR VENTANILLAS DE LA SEDE
+
     public function index(Request $request)
     {
         try {
@@ -44,7 +44,6 @@ class AdminCajaController extends Controller
         }
     }
 
-    // 2. CREAR NUEVA VENTANILLA
     public function store(Request $request)
     {
         $admin = auth()->user();
@@ -77,7 +76,6 @@ class AdminCajaController extends Controller
         ]);
     }
 
-    // 3. ACTUALIZAR NOMBRE DE VENTANILLA
     public function update(Request $request, $id)
     {
         $admin = auth()->user();
@@ -108,7 +106,6 @@ class AdminCajaController extends Controller
         ]);
     }
 
-    // 4. ELIMINAR VENTANILLA
     public function toggleEstado($id)
     {
         try {
@@ -118,6 +115,18 @@ class AdminCajaController extends Controller
                 ->findOrFail($id);
 
             if ($caja->trashed()) {
+                $existeDuplicado = Caja::where('sede_id', $admin->sede_id)
+                                   ->where('nombre', $caja->nombre)
+                                   ->whereNull('deleted_at')
+                                   ->exists();
+
+                if ($existeDuplicado) {
+                    return response()->json([
+                        'status' => 'error', 
+                        'message' => "No se puede reactivar. Ya existe una caja activa llamada '{$caja->nombre}'."
+                    ], 422);
+                }
+
                 $caja->restore();
                 $mensaje = 'Ventanilla reactivada';
             } else {
