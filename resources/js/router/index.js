@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import Swal from 'sweetalert2';
 import PantallaTv from '../components/PantallaTv.vue';
 import Kiosco from '../components/Kiosco.vue';
 import PanelCajero from '../components/PanelCajero.vue';
@@ -57,7 +58,13 @@ router.beforeEach((to, from, next) => {
 
     // 2. Bloqueo de ROLES específico (Si intenta entrar a una oficina que no le toca)
     if (to.meta.role && to.meta.role !== userRole) {
-        alert('🚫 No tienes permiso para acceder a esta área.');
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Acceso Denegado',
+            text: 'No tienes permiso para acceder a esta área.',
+            confirmButtonColor: '#ef4444'
+        });
         // Lo regresamos a su oficina correspondiente
         if (userRole === 'cajero') return next('/cajero');
         if (userRole === 'admin') return next('/admin');

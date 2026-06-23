@@ -44,10 +44,19 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const cajero = ref(null); 
 const totalPendientes = ref(0);
 const turnoActual = ref(null);
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
 
 const consultarPerfil = async () => {
     try {
@@ -96,11 +105,19 @@ const llamarSiguiente = async () => {
             turnoActual.value = response.data.turno;
             actualizarPendientes(cajero.value.sede_id); 
         } else if (response.data.status === 'no-data') {
-            alert('¡Excelente trabajo! Ya no hay turnos en la fila.');
+            Toast.fire({
+                icon: 'info',
+                title: '¡Excelente trabajo! Ya no hay turnos en la fila.'
+            });
         }
     } catch (error) {
-        console.error("Error al atender:", error);
-        alert(error.response?.data?.message || "Ocurrió un error al procesar el turno.");
+        // console.error("Error al atender:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo llamar al turno',
+            text: error.response?.data?.message || "Ocurrió un error al procesar el turno.",
+            confirmButtonColor: '#ef4444'
+        });
     }
 };
 
@@ -110,10 +127,19 @@ const terminarTurno = async () => {
         
         if (response.data.status === 'ok') {
             turnoActual.value = null; 
-            alert('¡Turno finalizado! Ventanilla libre.');
+            Toast.fire({
+                icon: 'success',
+                title: '¡Turno finalizado! Ventanilla libre.'
+            });
         }
     } catch (error) {
-        console.error("Error al finalizar turno:", error);
+        // console.error("Error al finalizar turno:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un problema al finalizar el turno.',
+            confirmButtonColor: '#ef4444'
+        });
     }
 };
 
