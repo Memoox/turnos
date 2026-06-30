@@ -19,7 +19,7 @@
                 @click="pestanaActual = 'ventanas'" 
                 :style="{ background: pestanaActual === 'ventanas' ? '#1e293b' : '#f8fafc', color: pestanaActual === 'ventanas' ? 'white' : '#64748b' }"
                 style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.2s;">
-                👥 Gestión de Ventanillas
+                🏢 Gestión de Ventanillas
             </button>
             <button 
                 @click="pestanaActual = 'reportes'" 
