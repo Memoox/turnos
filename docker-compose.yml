@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: turnos
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: turnos_personal
+      MYSQL_ROOT_PASSWORD: root 
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_vol:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: turnos_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_vol:/data
+
+volumes:
+  mysql_data_vol:
+  redis_data_vol:

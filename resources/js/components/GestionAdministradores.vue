@@ -34,14 +34,14 @@
 
                     <div>
                         <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #475569;">Correo (Login):</label>
-                        <input type="email" v-model="formulario.email" placeholder="ejemplo@test.com" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                        <input type="email" v-model="formulario.email" autocomplete="off" placeholder="ejemplo@test.com" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
                     </div>
 
                     <div>
                         <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #475569;">
                             Contraseña: <span v-if="modoEdicion" style="font-weight: normal; color: #94a3b8; font-size: 13px;">(Dejar en blanco para no cambiar)</span>
                         </label>
-                        <input type="password" v-model="formulario.password" placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                        <input type="password" v-model="formulario.password" autocomplete="new-password" placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
                     </div>
 
                     <div style="display: flex; gap: 15px;">

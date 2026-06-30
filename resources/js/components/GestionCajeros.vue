@@ -104,12 +104,12 @@
                     
                     <div>
                         <label style="font-size: 14px; font-weight: bold; color: #475569;">Correo Electrónico:</label>
-                        <input v-model="form.email" type="email" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                        <input v-model="form.email" type="email" autocomplete="off" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
                     </div>
                     
                     <div>
                         <label style="font-size: 14px; font-weight: bold; color: #475569;">Contraseña <span v-if="modoEdicion" style="font-weight: normal; font-size: 12px; color: #94a3b8;">(Dejar en blanco para no cambiar)</span>:</label>
-                        <input v-model="form.password" type="password" :required="!modoEdicion" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                        <input v-model="form.password" type="password" autocomplete="new-password" :required="!modoEdicion" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
                     </div>
 
                     <div>
