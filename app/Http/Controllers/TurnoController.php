@@ -162,7 +162,7 @@ class TurnoController extends Controller
             $query = Turno::select('tipo_turno_id', DB::raw('count(*) as total'))
                 ->where('sede_id', $sede_id)
                 ->where('status', 0) 
-                ->whereDate('created_at', Carboeran::today());
+                ->whereDate('created_at', Carbon::today());
 
             if ($user && $user->caja_id) {
                 $tiposPermitidos = DB::table('caja_tipo_turno')
