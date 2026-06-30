@@ -103,22 +103,6 @@ class AdminCajeroController extends Controller
         ]);
     }
 
-    // public function destroy(Request $request, $id)
-    // {
-    //     $admin = $request->user();
-    //     $cajero = User::where('sede_id', $admin->sede_id)->findOrFail($id);
-        
-    //     $cajero->caja_id = null;
-    //     $cajero->save();
-        
-    //     $cajero->delete();
-
-    //     return response()->json([
-    //         'status' => 'ok',
-    //         'message' => 'Cajero dado de baja'
-    //     ]);
-    // }
-
     public function toggleEstado($id)
     {
         try {

@@ -10,18 +10,16 @@ use Illuminate\Validation\Rule;
 
 class SuperadminUserController extends Controller
 {
-    // 1. Obtener todos los usuarios y catálogo de sedes
     public function index(Request $request)
     {
         try {
-            // 1. Capturamos lo que el usuario escribió (si no escribió nada, será null)
+            
             $search = $request->query('search');
 
-            // 2. Armamos la consulta inteligente
+            
             $usuarios = User::with('sede')
                 ->withTrashed()
                 ->when($search, function ($query, $search) {
-                    // Si hay texto, buscamos coincidencias en nombre o email
                     $query->where(function($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%")
                           ->orWhere('email', 'like', "%{$search}%");
@@ -30,7 +28,6 @@ class SuperadminUserController extends Controller
                 ->orderBy('id', 'desc')
                 ->paginate(10);
 
-            // 3. Transformamos la data de paginación
             $usuarios->getCollection()->transform(function ($user) {
                 $user->is_active = !$user->trashed(); 
                 return $user;
@@ -49,7 +46,6 @@ class SuperadminUserController extends Controller
         }
     }
 
-    // 2. Crear un nuevo usuario
     public function store(Request $request)
     {
         $request->validate([
@@ -57,7 +53,6 @@ class SuperadminUserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'rol_id' => 'required|integer',
-            // La sede puede ser nula si es Superadmin (rol 1), pero es obligatoria para Admins y Cajeros
             'sede_id' => 'nullable|exists:sedes,id' 
         ]);
 
@@ -65,10 +60,10 @@ class SuperadminUserController extends Controller
             User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make($request->password), // Encriptamos la clave
+                'password' => Hash::make($request->password), 
                 'rol_id' => $request->rol_id,
-                'sede_id' => $request->rol_id == 1 ? null : $request->sede_id, // Forzamos null si es Superadmin
-                'caja_id' => null // El superadmin no asigna cajas, eso lo hace el admin local
+                'sede_id' => $request->rol_id == 1 ? null : $request->sede_id, 
+                'caja_id' => null 
             ]);
 
             return response()->json(['status' => 'ok', 'message' => 'Usuario creado con éxito'], 201);
@@ -78,12 +73,11 @@ class SuperadminUserController extends Controller
         }
     }
 
-    // 3. Editar un usuario existente
     public function update(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($id)], // Ignoramos su propio email
+            'email' => ['required', 'email', Rule::unique('users')->ignore($id)], 
             'rol_id' => 'required|integer',
             'sede_id' => 'nullable|exists:sedes,id'
         ]);
@@ -92,16 +86,14 @@ class SuperadminUserController extends Controller
             $user = User::withTrashed()->findOrFail($id);
 
             if ($request->rol_id != 3 || $user->getOriginal('sede_id') != $request->sede_id) {
-                $user->caja_id = null; // Le quitamos la ventanilla
+                $user->caja_id = null; //
             }
             
-            // Actualizamos datos básicos
             $user->name = $request->name;
             $user->email = $request->email;
             $user->rol_id = $request->rol_id;
             $user->sede_id = $request->rol_id == 1 ? null : $request->sede_id;
 
-            // Solo actualizamos la contraseña si el Superadmin escribió una nueva
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
@@ -115,11 +107,9 @@ class SuperadminUserController extends Controller
         }
     }
 
-    // 4. Activar o Desactivar (SoftDelete)
     public function toggleStatus($id)
     {
         try {
-            // Protegemos al Superadmin Global original (ID 1) para que no se auto-borre por accidente
             if ($id == 1) {
                 return response()->json(['status' => 'error', 'message' => 'No puedes dar de baja al Superadmin principal'], 403);
             }
@@ -129,8 +119,9 @@ class SuperadminUserController extends Controller
             if ($user->trashed()) {
                 $user->restore();
             } else {
-                // Opcional: Si el usuario era cajero y estaba atendiendo, aquí podríamos liberar su caja.
-                // Por ahora, solo lo desactivamos para que ya no pueda loguearse.
+
+                $user->caja_id = null;
+                $user->save();
                 $user->delete();
             }
 
@@ -145,12 +136,11 @@ class SuperadminUserController extends Controller
     {
         try {
             $user = User::withTrashed()->findOrFail($id);
-            // Protección máxima: El Superadmin principal nunca se puede borrar
             if ($user->id == 1) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'El Superadministrador principal del sistema no puede ser eliminado.'
-                ], 403); // 403 Forbidden
+                ], 403); 
             }
 
             $tieneTurnos = \App\Models\Turno::where('user_id', $id)->exists();
@@ -174,7 +164,6 @@ class SuperadminUserController extends Controller
                 }
             }
 
-            // Destrucción total
             $user->forceDelete();
 
             return response()->json(['status' => 'ok', 'message' => 'Usuario eliminado permanentemente'], 200);

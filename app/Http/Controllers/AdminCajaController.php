@@ -25,7 +25,6 @@ class AdminCajaController extends Controller
                 ->orderBy('id', 'desc')
                 ->paginate(10);
 
-            // Evaluamos si están activas o en la papelera
             $cajas->getCollection()->transform(function ($caja) {
                 $caja->is_active = !$caja->trashed();
                 return $caja;
@@ -52,7 +51,6 @@ class AdminCajaController extends Controller
             'nombre' => [
                 'required', 'string', 'max:255',
                 Rule::unique('cajas')->where(function ($query) use ($admin) {
-                    // Validamos que sea único en esa sede y que no esté en la papelera
                     return $query->where('sede_id', $admin->sede_id)->whereNull('deleted_at');
                 })
             ],
@@ -130,7 +128,6 @@ class AdminCajaController extends Controller
                 $caja->restore();
                 $mensaje = 'Ventanilla reactivada';
             } else {
-                // Si la damos de baja, le quitamos la ventanilla a los cajeros que la tenían asignada
                 \App\Models\User::where('caja_id', $caja->id)->update(['caja_id' => null]);
                 
                 $caja->delete();

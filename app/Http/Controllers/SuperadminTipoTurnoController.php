@@ -47,7 +47,7 @@ class SuperadminTipoTurnoController extends Controller
         $request->validate([
             'clave' => 'required|string|max:10|unique:tipo_turnos,clave',
             'descripcion' => 'required|string|max:255|unique:tipo_turnos,descripcion',
-            'sedes' => 'array', // Validamos que manden un arreglo de sedes
+            'sedes' => 'array', 
             'icono' => 'nullable|string|max:10', 
         ]);
 
@@ -59,7 +59,6 @@ class SuperadminTipoTurnoController extends Controller
                 
             ]);
 
-            // MAGIA: Sincronizamos la tabla pivote (sede_tipo_turno)
             if ($request->has('sedes')) {
                 $tramite->sedes()->sync($request->sedes);
             }
@@ -71,7 +70,6 @@ class SuperadminTipoTurnoController extends Controller
         }
     }
 
-    // 3. Editar Trámite
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -100,7 +98,6 @@ class SuperadminTipoTurnoController extends Controller
                 'icono' => $request->icono,
             ]);
 
-            // Actualizamos la tabla pivote automáticamente
             if ($request->has('sedes')) {
                 $tramite->sedes()->sync($request->sedes);
             }
@@ -112,7 +109,6 @@ class SuperadminTipoTurnoController extends Controller
         }
     }
 
-    // 4. Activar o Desactivar (SoftDelete)
     public function toggleStatus($id)
     {
         try {
@@ -134,10 +130,8 @@ class SuperadminTipoTurnoController extends Controller
     public function forceDelete($id)
     {
         try {
-            $tramite = TipoTurno::withTrashed()->findOrFail($id); // O Tramite, según tu modelo
+            $tramite = TipoTurno::withTrashed()->findOrFail($id); 
 
-            // 1. Validamos si ya existen turnos generados con este trámite
-            // (Asegúrate de que 'tipo_turno_id' sea el nombre correcto en tu tabla turnos)
             $tieneTurnos = \App\Models\Turno::where('tipo_turno_id', $id)->exists();
 
             if ($tieneTurnos) {
@@ -147,12 +141,10 @@ class SuperadminTipoTurnoController extends Controller
                 ], 400);
             }
 
-            // 2. Limpiamos la tabla pivote para que no queden registros huérfanos de las sedes
             \Illuminate\Support\Facades\DB::table('sede_tipo_turno')
                 ->where('tipo_turno_id', $id)
                 ->delete();
 
-            // 3. Destrucción total
             $tramite->forceDelete();
 
             return response()->json(['status' => 'ok', 'message' => 'Trámite eliminado permanentemente'], 200);
