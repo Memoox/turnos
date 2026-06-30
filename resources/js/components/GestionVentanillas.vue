@@ -2,7 +2,7 @@
     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-            <h2 style="margin: 0; color: #1e293b; white-space: nowrap;">🏢 Gestión de Ventanillas</h2>
+            <h2 style="margin: 0; color: #1e293b; white-space: nowrap;">🖥️ Gestión de Ventanillas</h2>
             
             <div style="flex: 1; max-width: 500px;">
                 <input 
