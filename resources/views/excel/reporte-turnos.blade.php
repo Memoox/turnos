@@ -3,21 +3,21 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* 🔥 1. Reducimos los márgenes del PDF para ganar espacio vital arriba y abajo */
+    
         @page {
             margin: 1cm;
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 11px; /* Letra un poco más compacta */
+            font-size: 11px; 
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            page-break-inside: avoid; /* Evita que las tablas se partan a la mitad */
+            page-break-inside: avoid; 
         }
         th, td {
-            padding: 4px; /* Relleno más ajustado (antes 6px) */
+            padding: 4px; 
         }
         .text-center {
             text-align: center;
@@ -33,7 +33,6 @@
             background-color: #3b82f6;
             color: #ffffff;
         }
-        /* 🔥 2. Evitamos que el texto se vaya a dos líneas y haga la fila más alta */
         .nowrap {
             white-space: nowrap;
         }

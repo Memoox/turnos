@@ -76,7 +76,6 @@ const obtenerSede = async () => {
 const conectarWebSocket = (sedeId) => {
     // console.log(`📡 Admin escuchando actividad de la sede: ${sedeId}`);
 
-    // Escuchamos el mismo canal de la fila que usa el Cajero
     window.Echo.channel(`sede.${sedeId}.pendientes`)
         .listen('TurnoGenerado', () => {
             // console.log('🎟️ Nuevo turno en recepción. Actualizando números...');
@@ -110,10 +109,8 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (sedeIdActual.value) {
-        // 1. Apagamos el radar de la fila (Kiosco)
         window.Echo.leave(`sede.${sedeIdActual.value}.pendientes`);
-        
-        // 2. Apagamos el radar de las ventanillas (TV)
+
         window.Echo.leave(`sede.${sedeIdActual.value}.pantalla`);
     }
 });
