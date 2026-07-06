@@ -10,12 +10,19 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use OwenIt\Auditing\Contracts\Auditable;
 
 #[Fillable(['name', 'email', 'password','sede_id','caja_id','rol_id',])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+
+class User extends Authenticatable implements Auditable
 {
     use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
+
+    protected $auditExclude = [
+        'updated_at',
+    ];
     
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;

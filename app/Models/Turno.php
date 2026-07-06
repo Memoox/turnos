@@ -3,11 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+// use OwenIt\Auditing\Contracts\Auditable;
 // use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Turno extends Model
+// class Turno extends Model implements Auditable
+class Turno extends Model 
 {
+    // use \OwenIt\Auditing\Auditable;
     // use SoftDeletes;
+    // protected $auditExclude = [
+    //     'updated_at',
+    // ];
 
     protected $guarded = [];
 

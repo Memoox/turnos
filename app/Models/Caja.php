@@ -6,14 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use OwenIt\Auditing\Contracts\Auditable;
 
 
-class Caja extends Model
+class Caja extends Model implements Auditable
 {
     use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
     
     protected $guarded = [];
 
+    protected $auditExclude = [
+        'updated_at',
+    ];
+    
     // Una caja pertenece a una sede
     public function sede(): BelongsTo
     {

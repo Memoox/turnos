@@ -159,20 +159,36 @@ class TurnoController extends Controller
     {
         try {
             $user = Auth::user();
+
+            if ($user && is_null($user->caja_id)) {
+                return response()->json([
+                    "status" => "ok",
+                    "message" => "El usuario no tiene ventanilla asignada.",
+                    "data" => [] // Ningún turno pendiente para mostrar
+                ], 200);
+            }
+
             $query = Turno::select('tipo_turno_id', DB::raw('count(*) as total'))
                 ->where('sede_id', $sede_id)
                 ->where('status', 0) 
                 ->whereDate('created_at', Carbon::today());
 
-            if ($user && $user->caja_id) {
+            
                 $tiposPermitidos = DB::table('caja_tipo_turno')
                     ->where('caja_id', $user->caja_id)
                     ->pluck('tipo_turno_id')
                     ->toArray();
 
-                $query->whereIn('tipo_turno_id', $tiposPermitidos);
+            if (empty($tiposPermitidos)) {
+                return response()->json([
+                    "status" => "ok",
+                    "message" => "La ventanilla no tiene trámites configurados.",
+                    "data" => []
+                ], 200);
             }
 
+            $query->whereIn('tipo_turno_id', $tiposPermitidos);
+            
             $conteos = $query->groupBy('tipo_turno_id')
                 ->pluck('total', 'tipo_turno_id');
                
